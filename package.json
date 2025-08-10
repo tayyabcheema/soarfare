@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@types/formidable": "^3.4.5",
+    "axios": "^1.11.0",
     "formidable": "^3.5.4",
     "framer-motion": "^12.23.12",
     "next": "14.2.5",
