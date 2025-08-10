@@ -1,5 +1,8 @@
 // API Configuration and Client
-export const API_BASE_URL = '/api'; // Use local Next.js API routes
+// Use '/api' for client-side requests, but allow direct backend URL for server-side/proxy
+export const API_BASE_URL = typeof window === 'undefined'
+  ? process.env.NEXT_PUBLIC_API_BASE_URL || 'https://admin.soarfare.com'
+  : '/api';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -227,18 +230,23 @@ class ApiClient {
   }
 
   async register(userData: {
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     email: string;
     password: string;
     password_confirmation: string;
-    phone?: string;
   }): Promise<ApiResponse<LoginData>> {
-    // Use local API proxy to avoid CORS issues
-    return this.request<LoginData>('/auth/register', {
+    // Use local API proxy to avoid CORS issues and send as form-data
+    const formData = new FormData();
+    formData.append('first_name', userData.first_name);
+    formData.append('last_name', userData.last_name);
+    formData.append('email', userData.email);
+    formData.append('password', userData.password);
+    formData.append('password_confirmation', userData.password_confirmation);
+  return this.request<LoginData>('/auth/register', {
       method: 'POST',
-      data: userData,
-      isFormData: false // Send as JSON to our proxy
+      data: formData,
+      isFormData: true
     });
   }
 
