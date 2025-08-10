@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import SEO from '../components/SEO';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { useAuth } from '../contexts/AuthContext';
+import { registerUser } from '../utils/registerApi';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { ButtonLoader } from '../components/ui/LoadingSpinner';
 
 const Register: React.FC = () => {
-    const { register, isLoading } = useAuth();
+    const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -116,22 +116,33 @@ const Register: React.FC = () => {
         }
 
         // Form submission
-        const success = await register({
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            password: formData.password,
-            password_confirmation: formData.confirmPassword,
-            phone: formData.phone || undefined
-        });
-
-        if (!success) {
+        setIsLoading(true);
+        try {
+            const res = await registerUser({
+                first_name: formData.firstName,
+                last_name: formData.lastName,
+                email: formData.email,
+                password: formData.password,
+                password_confirmation: formData.confirmPassword
+            });
+            if (res.success) {
+                // Optionally store token, redirect, or show success
+                // localStorage.setItem('token', res.data.token);
+                window.location.href = '/login';
+            } else {
+                setErrors(prev => ({
+                    ...prev,
+                    general: res.message || 'Registration failed. Please try again.'
+                }));
+            }
+        } catch (err: any) {
             setErrors(prev => ({
                 ...prev,
-                general: 'Registration failed. Please try again.'
+                general: err?.response?.data?.message || 'Registration failed. Please try again.'
             }));
+        } finally {
+            setIsLoading(false);
         }
-        // Success handling is done in the AuthContext (redirect to dashboard)
     };
 
     return (
