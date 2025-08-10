@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { apiClient, User } from '../../lib/api';
+import { User } from '../../lib/api';
+import { updateUserProfile } from '../../utils/profileApi';
 import toast from 'react-hot-toast';
 
 interface ProfileData {
@@ -40,7 +41,10 @@ const AccountInfo: React.FC = () => {
                 }
 
                 console.log('Calling getUserProfile API...');
-                const response = await apiClient.getUserProfile(token);
+                // TODO: Replace with a getUserProfile utility if needed
+                const response = await fetch('/api/user/me', {
+                    headers: { Authorization: `Bearer ${token}` }
+                }).then(res => res.json());
                 console.log('API Response:', response);
                 
                 if (response.success && response.data) {
@@ -141,7 +145,7 @@ const AccountInfo: React.FC = () => {
             };
 
             console.log('Sending profile update:', profileUpdateData);
-            const response = await apiClient.saveUserProfile(token, profileUpdateData);
+            const response = await updateUserProfile(token, profileUpdateData);
             console.log('Save response:', response);
             
             if (response.success) {
@@ -211,12 +215,12 @@ const AccountInfo: React.FC = () => {
                                 className="w-full h-full object-cover"
                             />
                         </div>
-                        <button className="text-orange-500 hover:text-orange-600 font-medium flex items-center gap-2 transition-colors text-sm lg:text-base">
+                        {/* <button className="text-orange-500 hover:text-orange-600 font-medium flex items-center gap-2 transition-colors text-sm lg:text-base">
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                             </svg>
                             Change profile picture
-                        </button>
+                        </button> */}
                     </div>
 
                     {/* Form */}
@@ -268,9 +272,8 @@ const AccountInfo: React.FC = () => {
                                 type="email"
                                 placeholder="Email"
                                 value={profileData.email}
-                                onChange={(e) => handleInputChange('email', e.target.value)}
-                                disabled={true}
-                                className="w-full pl-10 lg:pl-12 pr-3 lg:pr-4 py-3 lg:py-4 bg-gray-100 border-0 rounded-lg lg:rounded-xl focus:ring-2 focus:ring-orange-400 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-500 text-sm lg:text-base disabled:bg-gray-200 disabled:cursor-not-allowed"
+                                disabled
+                                className="w-full pl-10 lg:pl-12 pr-3 lg:pr-4 py-3 lg:py-4 bg-gray-100 border-0 rounded-lg lg:rounded-xl text-gray-800 placeholder-gray-500 text-sm lg:text-base disabled:bg-gray-200 disabled:cursor-not-allowed"
                             />
                         </div>
 
@@ -284,10 +287,10 @@ const AccountInfo: React.FC = () => {
                                 </div>
                                 <input
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="Password (leave blank to keep current)"
+                                    placeholder="Password (not editable)"
                                     value={profileData.password}
-                                    onChange={(e) => handleInputChange('password', e.target.value)}
-                                    className="w-full pl-10 lg:pl-12 pr-10 lg:pr-12 py-3 lg:py-4 bg-gray-100 border-0 rounded-lg lg:rounded-xl focus:ring-2 focus:ring-orange-400 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-500 text-sm lg:text-base"
+                                    disabled
+                                    className="w-full pl-10 lg:pl-12 pr-10 lg:pr-12 py-3 lg:py-4 bg-gray-100 border-0 rounded-lg lg:rounded-xl text-gray-800 placeholder-gray-500 text-sm lg:text-base disabled:bg-gray-200 disabled:cursor-not-allowed"
                                 />
                                 <button 
                                     type="button"
@@ -307,10 +310,10 @@ const AccountInfo: React.FC = () => {
                                 </div>
                                 <input
                                     type={showConfirmPassword ? "text" : "password"}
-                                    placeholder="Confirm Password"
+                                    placeholder="Confirm Password (not editable)"
                                     value={profileData.confirmPassword}
-                                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                                    className="w-full pl-10 lg:pl-12 pr-10 lg:pr-12 py-3 lg:py-4 bg-gray-100 border-0 rounded-lg lg:rounded-xl focus:ring-2 focus:ring-orange-400 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-500 text-sm lg:text-base"
+                                    disabled
+                                    className="w-full pl-10 lg:pl-12 pr-10 lg:pr-12 py-3 lg:py-4 bg-gray-100 border-0 rounded-lg lg:rounded-xl text-gray-800 placeholder-gray-500 text-sm lg:text-base disabled:bg-gray-200 disabled:cursor-not-allowed"
                                 />
                                 <button 
                                     type="button"
@@ -323,15 +326,14 @@ const AccountInfo: React.FC = () => {
                                 </button>
                             </div>
                         </div>
-
-                        {/* Save Button */}
+                        {/* Save Profile Button Below Confirm Password */}
                         <div className="flex justify-end pt-2">
                             <button 
                                 onClick={handleSaveProfile}
                                 disabled={saving}
-                                className="bg-orange-500 text-white px-6 lg:px-8 py-3 rounded-lg lg:rounded-xl font-medium hover:bg-orange-600 transition-colors text-sm lg:text-base w-full sm:w-auto disabled:bg-orange-300 disabled:cursor-not-allowed"
+                                className="bg-[#f5945c] text-white px-6 lg:px-8 py-3 rounded-lg lg:rounded-xl font-semibold shadow-md hover:from-orange-600 hover:to-orange-800 hover:shadow-lg transition-all duration-200 text-sm lg:text-base w-full sm:w-auto disabled:bg-orange-300 disabled:cursor-not-allowed"
                             >
-                                {saving ? 'Saving...' : 'Save Changes'}
+                                {saving ? 'Saving...' : 'Save Profile'}
                             </button>
                         </div>
                     </div>
