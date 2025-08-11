@@ -1,3 +1,13 @@
+  // Highlight matched substring in suggestions
+  const highlightMatch = (text: string, query: string) => {
+    if (!query) return text;
+    const regex = new RegExp(`(${query.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")})`, 'ig');
+    return text.split(regex).map((part, i) =>
+      regex.test(part)
+        ? <span key={i} className="font-bold text-orange-500">{part}</span>
+        : part
+    );
+  };
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
@@ -508,7 +518,7 @@ const FlightSearch: React.FC = () => {
         style={{
           width: isMobile ? '90%' : '80%',
           maxWidth: '1400px',
-          marginTop: isMobile ? '-12rem' : '-18rem',
+          marginTop: isMobile ? '-12rem' : '-10rem', // revert to original position
           padding: isMobile ? '1.5rem 1rem' : '2rem',
         }}
       >
@@ -585,8 +595,13 @@ const FlightSearch: React.FC = () => {
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium text-gray-900">{airport.name} ({airport.iata})</div>
-                        <div className="text-sm text-gray-500">{airport.country}</div>
+                        <div className="font-medium text-gray-900">
+                          {highlightMatch(airport.name, fromQuery)} {' '}
+                          (<span>{highlightMatch(airport.iata, fromQuery)}</span>)
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {highlightMatch(airport.city, fromQuery)}, {highlightMatch(airport.country, fromQuery)}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -637,8 +652,13 @@ const FlightSearch: React.FC = () => {
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium text-gray-900">{airport.name} ({airport.iata})</div>
-                        <div className="text-sm text-gray-500">{airport.country}</div>
+                        <div className="font-medium text-gray-900">
+                          {highlightMatch(airport.name, toQuery)} {' '}
+                          (<span>{highlightMatch(airport.iata, toQuery)}</span>)
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {highlightMatch(airport.city, toQuery)}, {highlightMatch(airport.country, toQuery)}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -719,8 +739,8 @@ const FlightSearch: React.FC = () => {
                   setShowPassengerPanel(true);
                 }}
               >
-                <div className="bg-transparent border-b-2 border-white/30 pb-2 min-h-[40px] flex items-center justify-between">
-                  <span className="text-white text-lg">
+                <div className="bg-transparent border-b-2 border-white/30 pb-2 min-h-[40px] flex items-center justify-between min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
+                  <span className="text-white text-lg min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
                     {seatClass}, {passengers.adults + passengers.children + passengers.infants} Passenger{(passengers.adults + passengers.children + passengers.infants) !== 1 ? 's' : ''}
                   </span>
                   <svg className="w-4 h-4 text-[#FD7300]" fill="currentColor" viewBox="0 0 20 20">
