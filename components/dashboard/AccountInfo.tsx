@@ -25,6 +25,21 @@ const AccountInfo: React.FC = () => {
     const [saving, setSaving] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+    const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+
+    // Handle image file selection and preview
+    const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setProfileImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfileImage(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -206,21 +221,30 @@ const AccountInfo: React.FC = () => {
             
             <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-                    {/* Profile Picture */}
+                    {/* Profile Picture Upload */}
                     <div className="flex flex-col items-center space-y-4 lg:col-span-1">
-                        <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-xl lg:rounded-2xl overflow-hidden">
+                        <div className="relative w-24 h-24 lg:w-32 lg:h-32 rounded-xl lg:rounded-2xl overflow-hidden border-2 border-orange-200">
                             <img
-                                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+                                src={profileImage || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
                             />
                         </div>
-                        {/* <button className="text-orange-500 hover:text-orange-600 font-medium flex items-center gap-2 transition-colors text-sm lg:text-base">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        <label className="flex items-center gap-2 text-orange-500 hover:text-orange-600 font-medium cursor-pointer text-sm lg:text-base">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828A2 2 0 019 17H7v-2a2 2 0 012-2z" />
                             </svg>
-                            Change profile picture
-                        </button> */}
+                            Change picture
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleProfileImageChange}
+                            />
+                        </label>
+                        {profileImageFile && (
+                            <div className="text-xs text-gray-500">Selected: {profileImageFile.name}</div>
+                        )}
                     </div>
 
                     {/* Form */}

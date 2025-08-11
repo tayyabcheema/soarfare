@@ -106,7 +106,9 @@ const FlightSearchForm: React.FC<{ onSearch?: (data: any) => void }> = ({ onSear
           {tripType === 'return' && (
             <DateInput label="Return Date" value={returnDate} onChange={setReturnDate} minDate={travelDate} error={error && error.includes('Return') ? error : ''} />
           )}
-          <PassengersDropdown value={passengers} onChange={setPassengers} />
+          <div className="min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
+            <PassengersDropdown value={passengers} onChange={setPassengers} />
+          </div>
         </div>
       ) : (
         <div>
