@@ -1,3 +1,4 @@
+import axios, { AxiosRequestConfig } from 'axios';
 // API Configuration and Client
 // Use '/api' for client-side requests, but allow direct backend URL for server-side/proxy
 export const API_BASE_URL = typeof window === 'undefined'
@@ -176,30 +177,32 @@ class ApiClient {
     } = {}
   ): Promise<ApiResponse<T>> {
     const { method = 'GET', data, token, isFormData = false } = options;
-
     try {
-      const config: RequestInit = {
+      const url = `${this.baseURL}${endpoint}`;
+      const headers = this.getAuthHeaders(token);
+      let axiosConfig: AxiosRequestConfig = {
+        url,
         method,
-        headers: this.getAuthHeaders(token),
-        credentials: 'include', // Include cookies for CORS
+        headers,
+        withCredentials: true,
       };
-
-      // Handle form data differently
       if (data && method !== 'GET') {
         if (isFormData) {
           // Remove Content-Type for FormData (browser sets it with boundary)
-          delete (config.headers as Record<string, string>)['Content-Type'];
-          config.body = data instanceof FormData ? data : this.createFormData(data);
+          if (axiosConfig.headers) {
+            delete axiosConfig.headers['Content-Type'];
+          }
+          axiosConfig.data = data instanceof FormData ? data : this.createFormData(data);
         } else {
-          config.body = JSON.stringify(data);
+          axiosConfig.data = data;
         }
       }
-
-      const url = `${this.baseURL}${endpoint}`;
-      const response = await fetch(url, config);
-      
-      return this.handleResponse<T>(response);
-    } catch (error) {
+      const response = await axios(axiosConfig);
+      return this.handleAxiosResponse<T>(response);
+    } catch (error: any) {
+      if (error.response) {
+        return this.handleAxiosResponse<T>(error.response);
+      }
       console.error(`API Error (${endpoint}):`, error);
       return {
         success: false,
@@ -207,6 +210,25 @@ class ApiClient {
         error: 'Network error'
       };
     }
+  }
+
+  private handleAxiosResponse<T>(response: any): ApiResponse<T> {
+    const data = response.data;
+    if (response.status < 200 || response.status >= 300) {
+      return {
+        success: false,
+        message: data.message || data.error || 'Request failed',
+        error: data.error
+      };
+    }
+    if (data.success !== undefined && typeof data.success === 'number') {
+      return data;
+    }
+    return {
+      success: true,
+      data: data.data || data,
+      message: data.message
+    };
   }
 
   private createFormData(data: Record<string, any>): FormData {
@@ -309,6 +331,7 @@ class ApiClient {
   }
 
   // Transfer Points endpoints
+
   async getTransferPointsList(token: string, filters?: any): Promise<ApiResponse> {
     return this.request('/transfer-point-list', {
       method: 'POST',
@@ -317,8 +340,16 @@ class ApiClient {
     });
   }
 
+  async getTransferPointsHistory(token: string, params: any): Promise<ApiResponse> {
+    return this.request('/user/transfer-points/datatable', {
+      method: 'POST',
+      data: params,
+      token
+    });
+  }
+
   async confirmTransferPoints(token: string, transferData: any): Promise<ApiResponse> {
-    return this.request('/transfer-point-confirm', {
+  return this.request('/user/transfer-points/confirm', {
       method: 'POST',
       data: transferData,
       token
