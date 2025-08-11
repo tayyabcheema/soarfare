@@ -89,6 +89,10 @@ const TransferPoints: React.FC = () => {
             const token = getToken();
             if (!token) {
                 setTransferMessage('No authentication token found');
+                setTimeout(() => {
+                    setShowModal(false);
+                    setTransferMessage(null);
+                }, 1200);
                 setTransferLoading(false);
                 return;
             }
@@ -106,8 +110,16 @@ const TransferPoints: React.FC = () => {
             } else {
                 setTransferMessage(res.message || 'Failed to transfer points');
             }
+            setTimeout(() => {
+                setShowModal(false);
+                setTransferMessage(null);
+            }, 1500);
         } catch (err) {
             setTransferMessage('Failed to transfer points');
+            setTimeout(() => {
+                setShowModal(false);
+                setTransferMessage(null);
+            }, 1500);
         } finally {
             setTransferLoading(false);
         }
@@ -155,49 +167,62 @@ const TransferPoints: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
                     <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
                         <h2 className="text-lg font-bold mb-4">Transfer Points</h2>
-                        <form onSubmit={handleTransfer} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Recipient Email</label>
-                                <input
-                                    type="email"
-                                    required
-                                    value={transferEmail}
-                                    onChange={e => setTransferEmail(e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
-                                />
+                        {transferLoading ? (
+                            <div className="flex flex-col items-center justify-center py-8">
+                                <svg className="animate-spin h-8 w-8 text-orange-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                                </svg>
+                                <div className="text-orange-600 font-semibold text-lg animate-pulse">Transferring points...</div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Points to Transfer</label>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={userPoints}
-                                    required
-                                    value={transferPoints}
-                                    onChange={e => setTransferPoints(e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
-                                />
-                                <div className="text-xs text-gray-500 mt-1">You have {userPoints} points available.</div>
+                        ) : transferMessage ? (
+                            <div className="flex flex-col items-center justify-center py-8">
+                                <div className="text-orange-600 font-semibold text-lg animate-pulse">{transferMessage}</div>
                             </div>
-                            {transferMessage && <div className="text-sm text-center text-orange-600">{transferMessage}</div>}
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    className="px-4 py-2 bg-gray-200 rounded-lg"
-                                    onClick={() => { setShowModal(false); setTransferMessage(null); }}
-                                    disabled={transferLoading}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-orange text-white rounded-lg font-semibold hover:bg-orange-600"
-                                    disabled={transferLoading}
-                                >
-                                    {transferLoading ? 'Transferring...' : 'Transfer'}
-                                </button>
-                            </div>
-                        </form>
+                        ) : (
+                            <form onSubmit={handleTransfer} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Recipient Email</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={transferEmail}
+                                        onChange={e => setTransferEmail(e.target.value)}
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Points to Transfer</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={userPoints}
+                                        required
+                                        value={transferPoints}
+                                        onChange={e => setTransferPoints(e.target.value)}
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                    />
+                                    <div className="text-xs text-gray-500 mt-1">You have {userPoints} points available.</div>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        className="px-4 py-2 bg-gray-200 rounded-lg"
+                                        onClick={() => { setShowModal(false); setTransferMessage(null); }}
+                                        disabled={transferLoading}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-orange text-white rounded-lg font-semibold hover:bg-orange-600"
+                                        disabled={transferLoading}
+                                    >
+                                        Transfer
+                                    </button>
+                                </div>
+                            </form>
+                        )}
                     </div>
                 </div>
             )}
