@@ -552,9 +552,9 @@ const FlightSearch: React.FC = () => {
                 value={fromQuery}
                 onChange={(e) => {
                   setFromQuery(e.target.value);
-                  setShowFromDropdown(true);
+                  setShowFromDropdown(e.target.value.length >= 2);
                 }}
-                onFocus={() => setShowFromDropdown(true)}
+                onFocus={() => {}}
                 onBlur={() => setTimeout(() => setShowFromDropdown(false), 200)}
                 placeholder="Origin"
                 className="bg-transparent text-white text-lg w-full focus:outline-none focus:ring-0 border-none focus:border-none focus:border-b-0"
@@ -566,7 +566,7 @@ const FlightSearch: React.FC = () => {
             </div>
 
             {/* From Suggestions Dropdown */}
-            {showFromDropdown && filterAirports(fromQuery).length > 0 && (
+            {showFromDropdown && fromQuery.length >= 2 && filterAirports(fromQuery).length > 0 && (
               <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 w-full max-w-sm z-50">
                 <div className="max-h-60 overflow-y-auto">
                   {filterAirports(fromQuery).map((airport) => (
@@ -604,9 +604,9 @@ const FlightSearch: React.FC = () => {
                 value={toQuery}
                 onChange={(e) => {
                   setToQuery(e.target.value);
-                  setShowToDropdown(true);
+                  setShowToDropdown(e.target.value.length >= 2);
                 }}
-                onFocus={() => setShowToDropdown(true)}
+                onFocus={() => {}}
                 onBlur={() => setTimeout(() => setShowToDropdown(false), 200)}
                 placeholder="Destination"
                 className="bg-transparent text-white text-lg w-full focus:outline-none focus:ring-0 border-none focus:border-none focus:border-b-0"
@@ -618,7 +618,7 @@ const FlightSearch: React.FC = () => {
             </div>
 
             {/* To Suggestions Dropdown */}
-            {showToDropdown && filterAirports(toQuery).length > 0 && (
+            {showToDropdown && toQuery.length >= 2 && filterAirports(toQuery).length > 0 && (
               <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 w-full max-w-sm z-50">
                 <div className="max-h-60 overflow-y-auto">
                   {filterAirports(toQuery).map((airport) => (
