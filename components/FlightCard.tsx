@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PointsPurchaseModal from './PointsPurchaseModal';
 
 interface Flight {
   id: number | string;
@@ -53,6 +54,54 @@ const FlightCard: React.FC<FlightCardProps> = ({
   onShowMore = () => {} 
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showPointsModal, setShowPointsModal] = useState(false);
+  
+  // Mock user points - In real app, this should come from your auth context or user state
+  const currentUserPoints = 429; // This should be dynamic from your user's actual points
+
+  const handleBookNow = () => {
+    if (!flight.fareSourceCode) {
+      // If fareSourceCode is not in flight data, try to get it from localStorage
+      const flightIndex = flight.id.toString().split('-')[1];
+      const fareSourceCode = localStorage.getItem(`fareSourceCode_flight-${flightIndex}`);
+      
+      if (!fareSourceCode) {
+        console.error('Fare source code not found');
+        return;
+      }
+      
+      // Update flight data with fareSourceCode
+      flight.fareSourceCode = fareSourceCode;
+    }
+
+    if (currentUserPoints >= flight.points) {
+      // User has enough points, proceed with booking
+      onBookNow(flight); // fareSourceCode is now part of flight object
+    } else {
+      // User needs more points, show the modal
+      setShowPointsModal(true);
+    }
+  };
+
+  const handleUseCard = () => {
+    // The fareSourceCode is already part of the flight object from handleBookNow
+    // Handle the use existing card logic
+    console.log('Using existing card for flight:', flight);
+    // Here you would typically call your payment processing function
+    // After successful payment, you would update the user's points and proceed with booking
+    onBookNow(flight);
+    setShowPointsModal(false);
+  };
+
+  const handleInputNewCard = () => {
+    // The fareSourceCode is already part of the flight object from handleBookNow
+    // Handle the input new card logic
+    console.log('Input new card for flight:', flight);
+    // Here you would typically redirect to your payment form or open a payment modal
+    // After successful payment, you would update the user's points and proceed with booking
+    onBookNow(flight);
+    setShowPointsModal(false);
+  };
 
   // Format departure and arrival times
   const formatTime = (dateTimeString: string) => {
@@ -134,10 +183,10 @@ const FlightCard: React.FC<FlightCardProps> = ({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 shadow-sm">
-      <div className="flex items-stretch">
+      <div className="flex flex-col lg:flex-row items-stretch">
         {/* Left: Airline Info */}
-        <div className="flex items-center space-x-6 p-6 w-64 flex-shrink-0">
-          <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-100 overflow-hidden p-2">
+        <div className="flex items-center space-x-6 p-4 lg:p-6 w-full lg:w-64 lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-100">
+          <div className="w-12 h-12 lg:w-16 lg:h-16 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-100 overflow-hidden p-2">
             {flight.logo && flight.logo.includes('travelpack.com') ? (
               <img 
                 src={flight.logo} 
@@ -176,14 +225,14 @@ const FlightCard: React.FC<FlightCardProps> = ({
         </div>
 
         {/* Center: Route Info */}
-        <div className="flex-1 flex items-center justify-left px-2 py-4">
-          <div className="flex items-center justify-between w-full max-w-lg">
+        <div className="flex-1 flex items-center justify-left p-4 lg:px-2 lg:py-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full max-w-lg space-y-4 md:space-y-0">
             {/* Outbound Flight */}
-            <div className="text-left flex-1">
-              <div className="font-bold text-2xl text-gray-900 mb-1">{flight.from.city}</div>
-              <div className="text-sm text-gray-500 mb-1">{flight.from.code} - {flight.from.name}</div>
+            <div className="text-left flex-1 w-full md:w-auto">
+              <div className="font-bold text-xl lg:text-2xl text-gray-900 mb-1">{flight.from.city}</div>
+              <div className="text-xs lg:text-sm text-gray-500 mb-1">{flight.from.code} - {flight.from.name}</div>
               {departureTime && (
-                <div className="text-lg font-semibold text-gray-800">{departureTime}</div>
+                <div className="text-base lg:text-lg font-semibold text-gray-800">{departureTime}</div>
               )}
               {flight.tripType === 'round' && (
                 <div className="text-xs text-blue-600 mt-1">Outbound</div>
@@ -191,10 +240,10 @@ const FlightCard: React.FC<FlightCardProps> = ({
             </div>
 
             {/* Flight Path with duration and stops */}
-            <div className="flex flex-col items-center mx-8 flex-shrink-0">
-              <div className="text-sm font-medium text-gray-600 mb-2">{flight.duration}</div>
+            <div className="flex flex-col items-center mx-4 lg:mx-8 flex-shrink-0">
+              <div className="text-xs lg:text-sm font-medium text-gray-600 mb-2">{flight.duration}</div>
               <div className="flex items-center relative">
-                <div className="w-16 h-0.5 bg-gray-300"></div>
+                <div className="w-12 lg:w-16 h-0.5 bg-gray-300"></div>
                 {(flight.stops || 0) > 0 && (
                   <div className="w-3 h-3 bg-orange-500 rounded-full absolute left-1/2 transform -translate-x-1/2 border-2 border-white"></div>
                 )}
@@ -213,11 +262,11 @@ const FlightCard: React.FC<FlightCardProps> = ({
             </div>
 
             {/* To */}
-            <div className="text-right flex-1">
-              <div className="font-bold text-2xl text-gray-900 mb-1">{flight.to.city}</div>
-              <div className="text-sm text-gray-500 mb-1">{flight.to.code} - {flight.to.name}</div>
+            <div className="text-left md:text-right flex-1 w-full md:w-auto">
+              <div className="font-bold text-xl lg:text-2xl text-gray-900 mb-1">{flight.to.city}</div>
+              <div className="text-xs lg:text-sm text-gray-500 mb-1">{flight.to.code} - {flight.to.name}</div>
               {arrivalTime && (
-                <div className="text-lg font-semibold text-gray-800">{arrivalTime}</div>
+                <div className="text-base lg:text-lg font-semibold text-gray-800">{arrivalTime}</div>
               )}
               {flight.tripType === 'round' && (
                 <div className="text-xs text-blue-600 mt-1">Outbound</div>
@@ -227,27 +276,39 @@ const FlightCard: React.FC<FlightCardProps> = ({
         </div>
 
         {/* Right: Price & Book Button */}
-        <div className="bg-orange/30 rounded-r-2xl p-4 pl-16 pr-16 text-center min-w-[340px] flex flex-col justify-center border-l border-orange-100">
-          <div className="text-2xl font-bold text-gray mb-1">
+        <div className="bg-orange/30 lg:rounded-r-2xl p-4 lg:pl-16 lg:pr-16 text-center w-full lg:min-w-[340px] flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-orange-100">
+          <div className="text-xl lg:text-2xl font-bold text-gray mb-1">
             {flight.points.toLocaleString()} Points
           </div>
           {flight.price > 0 && (
-            <div className="text-lg text-gray-600 mb-6">
+            <div className="text-base lg:text-lg text-gray-600 mb-4 lg:mb-6">
               ${flight.price.toLocaleString()}
             </div>
           )}
           <button 
-            className="bg-orange hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors"
-            onClick={() => onBookNow(flight)}
+            className="bg-orange hover:bg-orange-600 text-white py-2.5 lg:py-3 rounded-xl font-semibold transition-colors"
+            onClick={handleBookNow}
           >
             Book Now
           </button>
         </div>
+
+        {/* Points Purchase Modal */}
+        <PointsPurchaseModal
+          isOpen={showPointsModal}
+          onClose={() => setShowPointsModal(false)}
+          onUseCard={handleUseCard}
+          onInputNewCard={handleInputNewCard}
+          currentPoints={currentUserPoints}
+          requiredPoints={flight.points}
+          pointsNeeded={flight.points - currentUserPoints}
+          purchaseAmount={195} // This should be calculated based on your points-to-dollars conversion
+        />
       </div>
 
       {/* Expanded Details */}
       {isExpanded && (flight.isReturn || flight.multiCitySegments) && (
-        <div className="border-t border-gray-200 p-6 bg-gray-50">
+        <div className="border-t border-gray-200 p-4 lg:p-6 bg-gray-50">
           <div className="max-w-4xl mx-auto">
             {/* Return Flight Details */}
             {flight.isReturn && flight.returnFlight && (

@@ -515,7 +515,18 @@ const Search = () => {
                 else if (totalStops > 2) flightType = `${totalStops} stops`;
 
                 const points = Math.floor(price / 3);
-                const fareSourceCode = fareItinerary.AirItineraryFareInfo?.FareSourceCode || '';
+                
+                // Get and format the fareSourceCode
+                const rawFareSourceCode = fareItinerary.AirItineraryFareInfo?.FareSourceCode || '';
+                const fareSourceCode = rawFareSourceCode.trim();
+                
+                // Create a unique flight ID that includes the index
+                const flightId = `flight-${index}`;
+                
+                // Store the fareSourceCode in localStorage immediately
+                if (fareSourceCode) {
+                    localStorage.setItem(`fareSourceCode_${flightId}`, fareSourceCode);
+                }
 
                 let isRefundable = "As per rules";
                 try {
@@ -802,14 +813,16 @@ const Search = () => {
                 
                 const processedFlights = processApiFlights(response);
                 
-                setSearchResults(processedFlights);
-                setFilteredResults(processedFlights);
-                setCurrentPage(1);
-                updateFilterOptions(processedFlights);
-                
-                processedFlights.forEach(flight => {
+                // Store fareSourceCodes in localStorage and set search results
+                const validFlights = processedFlights.filter(flight => flight && flight.fareSourceCode);
+                validFlights.forEach(flight => {
                     localStorage.setItem(`fareSourceCode_${flight.id}`, flight.fareSourceCode);
                 });
+
+                setSearchResults(validFlights);
+                setFilteredResults(validFlights);
+                setCurrentPage(1);
+                updateFilterOptions(validFlights);
                 
             } else {
                 setSearchError('Failed to search flights. Please try again.');
