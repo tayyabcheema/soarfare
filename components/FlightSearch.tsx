@@ -523,7 +523,7 @@ const FlightSearch: React.FC = () => {
         }}
       >
         {/* Trip Type Selection */}
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           {[
             { label: 'Round Trip', value: 'round' as const },
             { label: 'Single Trip', value: 'single' as const },
@@ -962,7 +962,7 @@ const FlightSearch: React.FC = () => {
               </div>
             </div>
             {/* Search Button (now at the end for multi-city) */}
-            <div className="flex justify-center mt-4">
+            {/* <div className="flex justify-center mt-4">
               <button
                 onClick={handleSearch}
                 disabled={isSubmitting}
@@ -976,7 +976,7 @@ const FlightSearch: React.FC = () => {
                   </svg>
                 )}
               </button>
-            </div>
+            </div> */}
           </div>
         )}
 
