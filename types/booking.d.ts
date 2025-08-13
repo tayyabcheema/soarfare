@@ -42,3 +42,57 @@ export interface BookingApiResponse {
   recordsFiltered: number;
   data: Booking[];
 }
+
+export interface UserPointsResponse {
+  points: number;
+}
+
+export interface FareSourceCodeResponse {
+  fareSourceCode: string;
+}
+
+export interface IBookingResponseData {
+  bookingId: string;
+  status: string;
+  points: {
+    used: number;
+    remaining: number;
+  };
+  flight: {
+    from: string;
+    to: string;
+    date: string;
+    flightNumber: string;
+    departureTime: string;
+    arrivalTime: string;
+  };
+}
+
+export interface IBookingResponse {
+  success: boolean;
+  bookingId: string;
+  message: string;
+}
+
+export interface IPointsPurchaseResponseData {
+  transactionId: string;
+  points: {
+    purchased: number;
+    newTotal: number;
+  };
+  payment: {
+    amount: number;
+    currency: string;
+    status: string;
+  };
+}
+
+export interface IPointsPurchaseResponse {
+  success: boolean;
+  message: string;
+  newPoints: number;
+}
+
+// This is what we're actually using in our mock implementation
+export type BookingResponse = IBookingResponse;
+export type PointsPurchaseResponse = IPointsPurchaseResponse;
