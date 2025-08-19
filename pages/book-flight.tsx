@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import TravelerDetailsForm from '../components/TravelerDetailsForm';
 import type { TravelerFormData } from '../components/TravelerDetailsForm';
 import BookingService from '../utils/bookingService';
+import { CenteredLoader } from '../components/ui/LoadingSpinner';
 
 const BookFlight = () => {
   const router = useRouter();
@@ -55,7 +56,7 @@ const BookFlight = () => {
   };
 
   if (!flightDetails) {
-    return <div>Loading...</div>;
+    return <CenteredLoader size="xl" />;
   }
 
   return (

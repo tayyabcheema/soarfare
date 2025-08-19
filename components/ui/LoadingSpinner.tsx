@@ -53,17 +53,14 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 // Full screen loading overlay
 export const LoadingOverlay: React.FC<{ isVisible: boolean; message?: string }> = ({ 
   isVisible, 
-  message = 'Loading...' 
+  message = '' 
 }) => {
   if (!isVisible) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-8 shadow-xl max-w-sm w-full mx-4">
-        <div className="text-center">
-          <LoadingSpinner size="lg" className="mx-auto mb-4" />
-          <p className="text-gray-700 font-medium">{message}</p>
-        </div>
+      <div className="flex items-center justify-center">
+        <LoadingSpinner size="xl" />
       </div>
     </div>
   );
@@ -98,31 +95,23 @@ export const ModernLoader: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl' }> = ({ s
 
 // Page loading component with blur overlay
 export const PageLoader: React.FC<{ message?: string; showOverlay?: boolean }> = ({ 
-  message = 'Loading...', 
+  message = '', 
   showOverlay = false 
 }) => {
   if (showOverlay) {
     return (
       <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl p-8 max-w-sm w-full mx-4 animate-fade-in">
-          <div className="text-center">
-            <ModernLoader size="lg" />
-            <div className="mt-6">
-              <p className="text-gray-600 font-medium">{message}</p>
-            </div>
-          </div>
+        <div className="flex items-center justify-center">
+          <ModernLoader size="xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center animate-fade-in">
-      <div className="text-center">
-        <ModernLoader size="lg" />
-        <div className="mt-8">
-          <p className="text-white font-medium text-lg">{message}</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center">
+        <ModernLoader size="xl" />
       </div>
     </div>
   );
@@ -132,5 +121,41 @@ export const PageLoader: React.FC<{ message?: string; showOverlay?: boolean }> =
 export const ButtonLoader: React.FC<{ size?: 'sm' | 'md' }> = ({ size = 'sm' }) => (
   <LoadingSpinner size={size} color="white" className="mr-2" />
 );
+
+// Centralized loading component for all pages
+export const CenteredLoader: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl' }> = ({ size = 'lg' }) => {
+  return (
+    <div 
+      style={{
+        position: 'fixed',
+        top: '0px',
+        left: '0px',
+        right: '0px',
+        bottom: '0px',
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        margin: 0,
+        padding: 0
+      }}
+      data-testid="centered-loader"
+    >
+      <div 
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        data-testid="loader-wrapper"
+      >
+        <ModernLoader size={size} />
+      </div>
+    </div>
+  );
+};
 
 export default LoadingSpinner;

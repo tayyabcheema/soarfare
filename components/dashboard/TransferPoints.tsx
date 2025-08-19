@@ -168,12 +168,11 @@ const TransferPoints: React.FC = () => {
                     <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
                         <h2 className="text-lg font-bold mb-4">Transfer Points</h2>
                         {transferLoading ? (
-                            <div className="flex flex-col items-center justify-center py-8">
-                                <svg className="animate-spin h-8 w-8 text-orange-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <div className="flex items-center justify-center py-8">
+                                <svg className="animate-spin h-8 w-8 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                                 </svg>
-                                <div className="text-orange-600 font-semibold text-lg animate-pulse">Transferring points...</div>
                             </div>
                         ) : transferMessage ? (
                             <div className="flex flex-col items-center justify-center py-8">

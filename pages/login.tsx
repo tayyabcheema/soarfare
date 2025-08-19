@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useAuth } from '../contexts/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
-import { ButtonLoader } from '../components/ui/LoadingSpinner';
+import { CenteredLoader } from '../components/ui/LoadingSpinner';
 
 const Login = () => {
     const { login, isLoading } = useAuth();
@@ -40,6 +40,11 @@ const Login = () => {
         }
         // Success handling is done in the AuthContext (redirect to dashboard)
     };
+
+    // Show centered loader when authentication is in progress
+    if (isLoading) {
+        return <CenteredLoader size="xl" />;
+    }
 
     return (
         <ProtectedRoute requireAuth={false} redirectIfAuthenticated={true}>
@@ -152,14 +157,7 @@ const Login = () => {
                                     className="w-full bg-orange text-white py-4 rounded-xl font-semibold text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] mt-8 disabled:opacity-60 flex items-center justify-center"
                                     disabled={isLoading}
                                 >
-                                   {isLoading ? (
-                                       <>
-                                           <ButtonLoader />
-                                           Logging in...
-                                       </>
-                                   ) : (
-                                       'Login'
-                                   )}
+                                    Login
                                 </button>
                                 {error && (
                                     <div className="mt-4 text-center text-red-500 text-sm font-medium">{error}</div>

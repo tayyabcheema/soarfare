@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { PageLoader } from './ui/LoadingSpinner';
+import { CenteredLoader } from './ui/LoadingSpinner';
 
 interface PageTransitionProps {
   children: React.ReactNode;
@@ -38,7 +38,7 @@ const PageTransition: React.FC<PageTransitionProps> = ({ children, className = '
   }, [router]);
 
   if (isLoading) {
-    return <PageLoader message="Loading page..." showOverlay={true} />;
+    return <CenteredLoader size="xl" />;
   }
 
   return (

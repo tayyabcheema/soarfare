@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LoadingSpinner } from './ui/LoadingSpinner';
+import { LoadingSpinner, CenteredLoader } from './ui/LoadingSpinner';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -58,6 +58,11 @@ const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   if (!isOpen) return null;
+
+  // Show centered loader when authentication is in progress
+  if (isLoading) {
+    return <CenteredLoader size="xl" />;
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -151,10 +156,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
             className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isLoading ? (
-              <>
-                <LoadingSpinner size="sm" color="white" className="mr-2" />
-                Logging in...
-              </>
+              <LoadingSpinner size="sm" color="white" />
             ) : (
               'Login'
             )}

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
-import { PageLoader } from './ui/LoadingSpinner';
+import { CenteredLoader } from './ui/LoadingSpinner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -38,13 +38,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Show loader while checking auth state
   if (isLoading) {
-    return <PageLoader message="Checking authentication..." showOverlay={true} />;
+    return <CenteredLoader size="xl" />;
   }
 
   // For pages that redirect authenticated users (login/register)
   if (redirectIfAuthenticated) {
     if (isAuthenticated) {
-      return <PageLoader message="Redirecting to dashboard..." showOverlay={true} />;
+      return <CenteredLoader size="xl" />;
     }
     // Not authenticated, show the page (login/register)
     return <>{children}</>;
@@ -52,7 +52,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // For pages that require authentication (dashboard)
   if (requireAuth && !isAuthenticated) {
-    return <PageLoader message="Redirecting to login..." showOverlay={true} />;
+    return <CenteredLoader size="xl" />;
   }
 
   return <>{children}</>;
