@@ -5,8 +5,10 @@ import MyBookings from '../components/dashboard/MyBookings';
 import MyInvoices from '../components/dashboard/MyInvoices';
 import AccountInfo from '../components/dashboard/AccountInfo';
 import TransferPoints from '../components/dashboard/TransferPoints';
+import PricingSection from '../components/PricingSection'; // 👈 new
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '../contexts/AuthContext';
+import PricingHeadingSection from '../components/PricingHeadingSection';
 
 const Dashboard = () => {
     const { user, logout, isLoading } = useAuth();
@@ -19,7 +21,8 @@ const Dashboard = () => {
         { id: 'bookings', label: 'My Bookings', icon: 'bookings' },
         { id: 'invoices', label: 'My Invoices', icon: 'invoices' },
         { id: 'account', label: 'Account Info', icon: 'account' },
-        { id: 'transfer', label: 'Transfer Points', icon: 'transfer' }
+        { id: 'transfer', label: 'Transfer Points', icon: 'transfer' },
+        { id: 'subscription', label: 'Manage Subscription', icon: 'subscription' }, // 👈 new
     ];
 
     const renderIcon = (iconType: string, isActive = false) => {
@@ -56,6 +59,12 @@ const Dashboard = () => {
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                     </svg>
                 );
+            case 'subscription':
+                return (
+                    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                );
             default:
                 return null;
         }
@@ -73,6 +82,8 @@ const Dashboard = () => {
                 return <AccountInfo />;
             case 'transfer':
                 return <TransferPoints />;
+            case 'subscription': 
+                return <PricingSection />;
             default:
                 return null;
         }
@@ -82,8 +93,8 @@ const Dashboard = () => {
         <ProtectedRoute requireAuth={true}>
             <SEO
                 title="Dashboard"
-                description="Manage your SoarFare account, bookings, invoices, and rewards points from your personal dashboard."
-                keywords="SoarFare dashboard, flight bookings, travel rewards, account management"
+                description="Manage your SoarFare account, bookings, invoices, subscriptions, and rewards points from your personal dashboard."
+                keywords="SoarFare dashboard, flight bookings, travel rewards, account management, subscription"
                 noindex={true}
             />
             
