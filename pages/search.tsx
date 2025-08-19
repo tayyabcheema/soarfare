@@ -9,6 +9,7 @@ import airports from '../airports.js';
 import { FlightSearchData, FlightSearchResponse } from '../lib/api';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import LocationDropdown from '../components/search/LocationDropdown';
 
 const DatePickerModal = ({ selectedDate, onDateSelect, minDate, onClose }: {
     selectedDate: string;
@@ -417,8 +418,6 @@ const Search = () => {
     const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
     const [selectedRefundable, setSelectedRefundable] = useState<string[]>([]);
 
-    const fromDropdownRef = useRef<HTMLDivElement>(null);
-    const toDropdownRef = useRef<HTMLDivElement>(null);
     const passengerDropdownRef = useRef<HTMLDivElement>(null);
     const multiCityRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -841,32 +840,17 @@ const Search = () => {
         }
     }, [router.isReady, router.query]);
 
-    // Airport search functionality
-    const filteredFromAirports = airports.filter((airport: any) =>
-        airport.city.toLowerCase().includes(fromQuery.toLowerCase()) ||
-        airport.name.toLowerCase().includes(fromQuery.toLowerCase()) ||
-        airport.iata.toLowerCase().includes(fromQuery.toLowerCase())
-    ).slice(0, 5);
 
-    const filteredToAirports = airports.filter((airport: any) =>
-        airport.city.toLowerCase().includes(toQuery.toLowerCase()) ||
-        airport.name.toLowerCase().includes(toQuery.toLowerCase()) ||
-        airport.iata.toLowerCase().includes(toQuery.toLowerCase())
-    ).slice(0, 5);
 
     // Handle airport selection
     const handleFromAirportSelect = (airport: any) => {
         setSelectedFromAirport(airport);
         setFrom(airport.city);
-        setFromQuery('');
-        setShowFromDropdown(false);
     };
 
     const handleToAirportSelect = (airport: any) => {
         setSelectedToAirport(airport);
         setTo(airport.city);
-        setToQuery('');
-        setShowToDropdown(false);
     };
 
     // Multi-city specific functions
@@ -1251,12 +1235,6 @@ const Search = () => {
     // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (fromDropdownRef.current && !fromDropdownRef.current.contains(event.target as Node)) {
-                setShowFromDropdown(false);
-            }
-            if (toDropdownRef.current && !toDropdownRef.current.contains(event.target as Node)) {
-                setShowToDropdown(false);
-            }
             if (passengerDropdownRef.current && !passengerDropdownRef.current.contains(event.target as Node)) {
                 setShowPassengerPanel(false);
             }
@@ -1383,46 +1361,14 @@ const Search = () => {
                         {tripType !== 'multi' && (
                             <div className="flex flex-col md:flex-row md:flex-wrap lg:flex-nowrap items-stretch md:items-end gap-4">
                                 {/* From */}
-                                <div className="relative flex-1 min-w-[200px]" ref={fromDropdownRef}>
-                                    <div 
-                                        className="cursor-pointer bg-gray-50 rounded-lg p-3 md:p-4 border border-gray-200 hover:border-orange transition-colors h-[60px] md:h-[70px] flex flex-col justify-center" 
-                                        onClick={() => {
-                                            setShowFromDropdown(!showFromDropdown);
-                                            setFromQuery(selectedFromAirport.city);
-                                        }}
-                                    >
-                                        <label className="text-xs font-medium text-gray-600 mb-1">From</label>
-                                        <div className="font-bold text-gray-900 text-base md:text-lg">{selectedFromAirport.city || from || 'Origin'}</div>
-                                        <div className="text-xs text-gray-500 truncate">{selectedFromAirport.name || 'Origin'}</div>
-                                    </div>
-                                    
-                                    {/* From Dropdown */}
-                                    {showFromDropdown && (
-                                        <div className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg mt-1">
-                                            <div className="p-3">
-                                                <input
-                                                    type="text"
-                                                    value={fromQuery}
-                                                    onChange={(e) => setFromQuery(e.target.value)}
-                                                    placeholder="Search airports..."
-                                                    className="w-full p-2 border border-gray-200 rounded focus:outline-none focus:border-orange"
-                                                    autoFocus
-                                                />
-                                            </div>
-                                            <div className="max-h-48 overflow-y-auto">
-                                                {filteredFromAirports.map((airport: any) => (
-                                                    <div
-                                                        key={airport.iata}
-                                                        className="p-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100"
-                                                        onClick={() => handleFromAirportSelect(airport)}
-                                                    >
-                                                        <div className="font-medium text-gray-900">{airport.city}</div>
-                                                        <div className="text-sm text-gray-500">{airport.name} ({airport.iata})</div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
+                                <div className="flex-1 min-w-[200px]">
+                                    <LocationDropdown
+                                        label="From"
+                                        value={selectedFromAirport.name ? selectedFromAirport : null}
+                                        onChange={handleFromAirportSelect}
+                                        placeholder="Search airports..."
+                                        ariaLabel="From Airport"
+                                    />
                                 </div>
 
                                 {/* Swap Button */}
@@ -1445,46 +1391,14 @@ const Search = () => {
                                 </div>
 
                                 {/* To */}
-                                <div className="relative flex-1 min-w-[200px]" ref={toDropdownRef}>
-                                    <div 
-                                        className="cursor-pointer bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-orange transition-colors h-[70px] flex flex-col justify-center" 
-                                        onClick={() => {
-                                            setShowToDropdown(!showToDropdown);
-                                            setToQuery(selectedToAirport.city);
-                                        }}
-                                    >
-                                        <label className="text-xs font-medium text-gray-600 mb-1">To</label>
-                                        <div className="font-bold text-gray-900 text-lg">{selectedToAirport.city || to || 'Destination'}</div>
-                                        <div className="text-xs text-gray-500 truncate">{selectedToAirport.name || 'Destination'}</div>
-                                    </div>
-                                    
-                                    {/* To Dropdown */}
-                                    {showToDropdown && (
-                                        <div className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg mt-1">
-                                            <div className="p-3">
-                                                <input
-                                                    type="text"
-                                                    value={toQuery}
-                                                    onChange={(e) => setToQuery(e.target.value)}
-                                                    placeholder="Search airports..."
-                                                    className="w-full p-2 border border-gray-200 rounded focus:outline-none focus:border-orange"
-                                                    autoFocus
-                                                />
-                                            </div>
-                                            <div className="max-h-48 overflow-y-auto">
-                                                {filteredToAirports.map((airport: any) => (
-                                                    <div
-                                                        key={airport.iata}
-                                                        className="p-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100"
-                                                        onClick={() => handleToAirportSelect(airport)}
-                                                    >
-                                                        <div className="font-medium text-gray-900">{airport.city}</div>
-                                                        <div className="text-sm text-gray-500">{airport.name} ({airport.iata})</div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
+                                <div className="flex-1 min-w-[200px]">
+                                    <LocationDropdown
+                                        label="To"
+                                        value={selectedToAirport.name ? selectedToAirport : null}
+                                        onChange={handleToAirportSelect}
+                                        placeholder="Search airports..."
+                                        ariaLabel="To Airport"
+                                    />
                                 </div>
 
                                 {/* Travel Date */}
