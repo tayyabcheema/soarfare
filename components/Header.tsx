@@ -116,7 +116,9 @@ const Header: React.FC = () => {
           {/* Desktop Auth Buttons */}
           <div className="hidden lg:flex items-center space-x-4">
             {isLoading ? (
-              <div className="text-white text-sm">Loading...</div>
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              </div>
             ) : isAuthenticated ? (
               <>
                 <Link
@@ -205,7 +207,9 @@ const Header: React.FC = () => {
               {/* Mobile Auth Buttons */}
               <div className="flex flex-col items-center space-y-6">
                 {isLoading ? (
-                  <div className="text-white text-xl">Loading...</div>
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                  </div>
                 ) : isAuthenticated ? (
                   <>
                     <Link

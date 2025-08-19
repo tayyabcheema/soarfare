@@ -1352,7 +1352,6 @@ const Search = () => {
                                         {isLoading ? (
                                             <>
                                                 <div className="w-4 h-4 border-2 border-gray-300 border-t-orange rounded-full animate-spin"></div>
-                                                <span>Loading...</span>
                                             </>
                                         ) : (
                                             <>

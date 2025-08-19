@@ -753,22 +753,24 @@ const FlightSearch: React.FC = () => {
             </div>
           )}
 
-          {/* Search Button */}
-          <div className={`flex justify-center ${isMobile ? 'col-span-1 mt-4' : ''}`}>
-            <button
-              onClick={handleSearch}
-              disabled={isSubmitting}
-              className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-[#FD7300] border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-[#FD7300]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              )}
-            </button>
-          </div>
+          {/* Search Button - only show for non-multi city */}
+          {tripType !== 'multi' && (
+            <div className={`flex justify-center ${isMobile ? 'col-span-1 mt-4' : ''}`}>
+              <button
+                onClick={handleSearch}
+                disabled={isSubmitting}
+                className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-[#FD7300] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-5 h-5 md:w-6 md:h-6 text-[#FD7300]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Multi-City Additional Segments */}
@@ -927,56 +929,60 @@ const FlightSearch: React.FC = () => {
               </div>
             ))}
 
-            {/* Add More Button (now before Search for multi-city) */}
-            {multiCitySegments.length < 3 && (
-              <div className="flex justify-center mt-4">
-                <button
-                  onClick={addMultiCitySegment}
-                  className="flex items-center space-x-2 px-6 py-3 bg-white text-[#0C2442] rounded-lg hover:bg-gray-100 transition-colors font-medium"
-                >
-                  <span>+</span>
-                  <span>Add More</span>
-                </button>
-              </div>
-            )}
-
-            {/* Seats & Classes for Multi-City */}
+            {/* Seats & Classes for Multi-City with buttons */}
             <div className="mt-8">
-              <div className="relative max-w-xs">
-                <label className="block text-white font-bold mb-2">Seats & Classes</label>
-                <div 
-                  className="relative cursor-pointer"
-                  onClick={() => setShowPassengerPanel(true)}
-                >
-                  <div className="bg-transparent border-b-2 border-white/30 pb-2 min-h-[40px] flex items-center justify-between">
-                    <span className="text-white text-lg">
-                      {seatClass}, {passengers.adults + passengers.children + passengers.infants} Passenger{(passengers.adults + passengers.children + passengers.infants) !== 1 ? 's' : ''}
-                    </span>
-                    <svg className="w-4 h-4 text-[#FD7300]" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
+              <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'items-end space-x-6'}`}>
+                {/* Seats & Classes */}
+                <div className="relative max-w-xs">
+                  <label className="block text-white font-bold mb-2">Seats & Classes</label>
+                  <div 
+                    className="relative cursor-pointer"
+                    onClick={() => setShowPassengerPanel(true)}
+                  >
+                    <div className="bg-transparent border-b-2 border-white/30 pb-2 min-h-[40px] flex items-center justify-between">
+                      <span className="text-white text-lg">
+                        {seatClass}, {passengers.adults + passengers.children + passengers.infants} Passenger{(passengers.adults + passengers.children + passengers.infants) !== 1 ? 's' : ''}
+                      </span>
+                      <svg className="w-4 h-4 text-[#FD7300]" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
                   </div>
+
+                  {showPassengerPanel && <PassengerPanel />}
                 </div>
 
-                {showPassengerPanel && <PassengerPanel />}
+                {/* Buttons Container */}
+                <div className={`flex ${isMobile ? 'justify-center space-x-4' : 'items-center space-x-4'}`}>
+                  {/* Add More Button */}
+                  {multiCitySegments.length < 3 && (
+                    <button
+                      onClick={addMultiCitySegment}
+                      className="flex items-center space-x-2 px-6 py-3 bg-white text-[#0C2442] rounded-lg hover:bg-gray-100 transition-colors font-medium"
+                    >
+                      <span>+</span>
+                      <span>Add More</span>
+                    </button>
+                  )}
+
+                  {/* Search Button */}
+                  <button
+                    onClick={handleSearch}
+                    disabled={isSubmitting}
+                    className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
+                      <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-[#FD7300] border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-5 h-5 md:w-6 md:h-6 text-[#FD7300]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
-            {/* Search Button (now at the end for multi-city) */}
-            {/* <div className="flex justify-center mt-4">
-              <button
-                onClick={handleSearch}
-                disabled={isSubmitting}
-                className="w-12 h-12 md:w-14 md:h-14 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-[#FD7300] border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <svg className="w-5 h-5 md:w-6 md:h-6 text-[#FD7300]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                )}
-              </button>
-            </div> */}
+
           </div>
         )}
 
