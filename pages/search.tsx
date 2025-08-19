@@ -361,8 +361,7 @@ const Search = () => {
     const [tripType, setTripType] = useState<'round' | 'single' | 'multi'>('single');
     const [from, setFrom] = useState('');
     const [to, setTo] = useState('');
-    const [fromQuery, setFromQuery] = useState('');
-    const [toQuery, setToQuery] = useState('');
+
     const [selectedFromAirport, setSelectedFromAirport] = useState({
         name: '',
         city: '',
@@ -380,8 +379,7 @@ const Search = () => {
     const [seatClass, setSeatClass] = useState('Economy');
     const [passengers, setPassengers] = useState({ adults: 1, children: 0, infants: 0 });
 
-    const [showFromDropdown, setShowFromDropdown] = useState(false);
-    const [showToDropdown, setShowToDropdown] = useState(false);
+
     const [showTravelDatePicker, setShowTravelDatePicker] = useState(false);
     const [showReturnDatePicker, setShowReturnDatePicker] = useState(false);
     const [showPassengerPanel, setShowPassengerPanel] = useState(false);
@@ -391,24 +389,16 @@ const Search = () => {
             from: '', 
             to: '', 
             date: '', 
-            fromQuery: '', 
-            toQuery: '',
             selectedFromAirport: { name: '', city: '', iata: '', country: '' },
             selectedToAirport: { name: '', city: '', iata: '', country: '' },
-            showFromDropdown: false,
-            showToDropdown: false,
             showDatePicker: false
         },
         { 
             from: '', 
             to: '', 
             date: '', 
-            fromQuery: '', 
-            toQuery: '',
             selectedFromAirport: { name: '', city: '', iata: '', country: '' },
             selectedToAirport: { name: '', city: '', iata: '', country: '' },
-            showFromDropdown: false,
-            showToDropdown: false,
             showDatePicker: false
         }
     ]);
@@ -853,14 +843,7 @@ const Search = () => {
         setTo(airport.city);
     };
 
-    // Multi-city specific functions
-    const getFilteredAirportsForSegment = (query: string) => {
-        return airports.filter((airport: any) =>
-            airport.city.toLowerCase().includes(query.toLowerCase()) ||
-            airport.name.toLowerCase().includes(query.toLowerCase()) ||
-            airport.iata.toLowerCase().includes(query.toLowerCase())
-        ).slice(0, 5);
-    };
+
 
     const updateMultiCitySegment = (index: number, field: string, value: any) => {
         setMultiCitySegments(prev => 
@@ -876,41 +859,29 @@ const Search = () => {
                 i === index ? { 
                     ...segment, 
                     selectedFromAirport: airport,
-                    from: airport.city,
-                    fromQuery: `${airport.city} (${airport.iata})`,
-                    showFromDropdown: false
+                    from: airport.city
                 } : segment
             )
         );
     }, []);
 
     const handleMultiCityToAirportSelect = useCallback((index: number, airport: any) => {
-        console.log('🚀 TO Airport Selection:', { index, airport: airport.city, iata: airport.iata });
-        
         setMultiCitySegments(prev => {
-            console.log('📋 Current segments before update:', prev[index]);
-            
             const newSegments = prev.map((segment, i) => 
                 i === index ? { 
                     ...segment, 
                     selectedToAirport: airport,
-                    to: airport.city,
-                    toQuery: `${airport.city} (${airport.iata})`,
-                    showToDropdown: false
+                    to: airport.city
                 } : segment
             );
-            
-            console.log('✅ Updated segment:', newSegments[index]);
             
             // Auto-fill next origin from current destination (cascading logic)
             if (index < newSegments.length - 1) {
                 newSegments[index + 1] = {
                     ...newSegments[index + 1],
                     selectedFromAirport: airport,
-                    from: airport.city,
-                    fromQuery: `${airport.city} (${airport.iata})`
+                    from: airport.city
                 };
-                console.log('🔗 Auto-filled next segment:', newSegments[index + 1]);
             }
             
             return newSegments;
@@ -933,36 +904,18 @@ const Search = () => {
         });
     }, []);
 
-    const toggleMultiCityDropdown = (index: number, dropdownType: 'from' | 'to' | 'date') => {
+    const toggleMultiCityDatePicker = (index: number) => {
         setMultiCitySegments(prev => 
             prev.map((segment, i) => {
                 if (i === index) {
-                    // Close all other dropdowns for this segment
-                    const updatedSegment = {
-                        ...segment,
-                        showFromDropdown: false,
-                        showToDropdown: false,
-                        showDatePicker: false
-                    };
-                    
-                    // Toggle the specific dropdown
-                    if (dropdownType === 'from') {
-                        updatedSegment.showFromDropdown = !segment.showFromDropdown;
-                        updatedSegment.fromQuery = segment.selectedFromAirport.city || '';
-                    } else if (dropdownType === 'to') {
-                        updatedSegment.showToDropdown = !segment.showToDropdown;
-                        updatedSegment.toQuery = segment.selectedToAirport.city || '';
-                    } else if (dropdownType === 'date') {
-                        updatedSegment.showDatePicker = !segment.showDatePicker;
-                    }
-                    
-                    return updatedSegment;
-                } else {
-                    // Close all dropdowns for other segments
                     return {
                         ...segment,
-                        showFromDropdown: false,
-                        showToDropdown: false,
+                        showDatePicker: !segment.showDatePicker
+                    };
+                } else {
+                    // Close date picker for other segments
+                    return {
+                        ...segment,
                         showDatePicker: false
                     };
                 }
@@ -989,24 +942,16 @@ const Search = () => {
                     from: '', 
                     to: '', 
                     date: '', 
-                    fromQuery: '', 
-                    toQuery: '',
                     selectedFromAirport: { name: '', city: '', iata: '', country: '' },
                     selectedToAirport: { name: '', city: '', iata: '', country: '' },
-                    showFromDropdown: false,
-                    showToDropdown: false,
                     showDatePicker: false
                 },
                 { 
                     from: '', 
                     to: '', 
                     date: '', 
-                    fromQuery: '', 
-                    toQuery: '',
                     selectedFromAirport: { name: '', city: '', iata: '', country: '' },
                     selectedToAirport: { name: '', city: '', iata: '', country: '' },
-                    showFromDropdown: false,
-                    showToDropdown: false,
                     showDatePicker: false
                 }
             ]);
@@ -1019,12 +964,8 @@ const Search = () => {
             from: '', 
             to: '', 
             date: '', 
-            fromQuery: '', 
-            toQuery: '',
             selectedFromAirport: { name: '', city: '', iata: '', country: '' },
             selectedToAirport: { name: '', city: '', iata: '', country: '' },
-            showFromDropdown: false,
-            showToDropdown: false,
             showDatePicker: false
         }]);
     };
@@ -1239,15 +1180,13 @@ const Search = () => {
                 setShowPassengerPanel(false);
             }
             
-            // Handle multi-city dropdowns
+            // Handle multi-city date pickers
             multiCityRefs.current.forEach((ref, index) => {
                 if (ref && !ref.contains(event.target as Node)) {
                     setMultiCitySegments(prev => 
                         prev.map((segment, i) => 
                             i === index ? {
                                 ...segment,
-                                showFromDropdown: false,
-                                showToDropdown: false,
                                 showDatePicker: false
                             } : segment
                         )
@@ -1602,107 +1541,37 @@ const Search = () => {
                             <div className="space-y-2">
                                 {/* Multi-city rows */}
                                 {multiCitySegments.map((segment, index) => {
-                                    const filteredFromAirports = getFilteredAirportsForSegment(segment.fromQuery);
-                                    const filteredToAirports = getFilteredAirportsForSegment(segment.toQuery);
                                     const minDate = index > 0 ? multiCitySegments[index - 1].date || undefined : undefined;
                                     
                                     return (
                                         <div key={`segment-${index}`} className="flex flex-col md:flex-row md:flex-wrap lg:flex-nowrap items-stretch md:items-end gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                                             {/* From */}
-                                            <div className="relative flex-1 min-w-[200px]" ref={el => { multiCityRefs.current[index] = el; }}>
-                                                <div 
-                                                    className="cursor-pointer bg-white rounded-lg  border border-gray-200 hover:border-orange transition-colors h-[70px] flex flex-col justify-center"
-                                                    onClick={() => toggleMultiCityDropdown(index, 'from')}
-                                                >
-                                                    <label className="text-xs font-medium text-gray-600 mb-1">From</label>
-                                                    <div className="font-bold text-gray-900 text-base lg:text-lg truncate">
-                                                        {segment.selectedFromAirport.city 
-                                                            ? `${segment.selectedFromAirport.city} (${segment.selectedFromAirport.iata})`
-                                                            : segment.from || 'Origin'
-                                                        }
-                                                    </div>
-                                                    <div className="text-xs text-gray-500 truncate">{segment.selectedFromAirport.name || 'Airport'}</div>
-                                                </div>
-                                                
-                                                {/* From Dropdown */}
-                                                {segment.showFromDropdown && (
-                                                    <div className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg mt-1">
-                                                        <div className="p-3">
-                                                            <input
-                                                                type="text"
-                                                                value={segment.fromQuery}
-                                                                onChange={(e) => updateMultiCitySegment(index, 'fromQuery', e.target.value)}
-                                                                placeholder="Search airports..."
-                                                                className="w-full p-2 border border-gray-200 rounded focus:outline-none focus:border-orange"
-                                                                autoFocus
-                                                            />
-                                                        </div>
-                                                        <div className="max-h-48 overflow-y-auto">
-                                                            {filteredFromAirports.map((airport: any) => (
-                                                                <div
-                                                                    key={airport.iata}
-                                                                    className="p-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100"
-                                                                    onClick={() => handleMultiCityFromAirportSelect(index, airport)}
-                                                                >
-                                                                    <div className="font-medium text-gray-900">{airport.city}</div>
-                                                                    <div className="text-sm text-gray-500">{airport.name} ({airport.iata})</div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
+                                            <div className="flex-1 min-w-[200px]">
+                                                <LocationDropdown
+                                                    label="From"
+                                                    value={segment.selectedFromAirport.name ? segment.selectedFromAirport : null}
+                                                    onChange={(airport) => handleMultiCityFromAirportSelect(index, airport)}
+                                                    placeholder="Search airports..."
+                                                    ariaLabel={`From Airport - Segment ${index + 1}`}
+                                                />
                                             </div>
 
                                             {/* To */}
-                                            <div className="relative flex-1 min-w-[200px]">
-                                                <div 
-                                                    className="cursor-pointer bg-white rounded-lg border border-gray-200 hover:border-orange transition-colors h-[70px] flex flex-col justify-center"
-                                                    onClick={() => toggleMultiCityDropdown(index, 'to')}
-                                                >
-                                                    <label className="text-xs font-medium text-gray-600 mb-1">To</label>
-                                                    <div className="font-bold text-gray-900 text-base lg:text-lg truncate">
-                                                        {segment.selectedToAirport.city 
-                                                            ? `${segment.selectedToAirport.city} (${segment.selectedToAirport.iata})`
-                                                            : segment.to || 'Destination'
-                                                        }
-                                                    </div>
-                                                    <div className="text-xs text-gray-500 truncate">{segment.selectedToAirport.name || 'Airport'}</div>
-                                                </div>
-                                                
-                                                {/* To Dropdown */}
-                                                {segment.showToDropdown && (
-                                                    <div className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg mt-1">
-                                                        <div className="p-3">
-                                                            <input
-                                                                type="text"
-                                                                value={segment.toQuery}
-                                                                onChange={(e) => updateMultiCitySegment(index, 'toQuery', e.target.value)}
-                                                                placeholder="Search airports..."
-                                                                className="w-full p-2 border border-gray-200 rounded focus:outline-none focus:border-orange"
-                                                                autoFocus
-                                                            />
-                                                        </div>
-                                                        <div className="max-h-48 overflow-y-auto">
-                                                            {filteredToAirports.map((airport: any) => (
-                                                                <div
-                                                                    key={airport.iata}
-                                                                    className="p-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100"
-                                                                    onClick={() => handleMultiCityToAirportSelect(index, airport)}
-                                                                >
-                                                                    <div className="font-medium text-gray-900">{airport.city}</div>
-                                                                    <div className="text-sm text-gray-500">{airport.name} ({airport.iata})</div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
+                                            <div className="flex-1 min-w-[200px]">
+                                                <LocationDropdown
+                                                    label="To"
+                                                    value={segment.selectedToAirport.name ? segment.selectedToAirport : null}
+                                                    onChange={(airport) => handleMultiCityToAirportSelect(index, airport)}
+                                                    placeholder="Search airports..."
+                                                    ariaLabel={`To Airport - Segment ${index + 1}`}
+                                                />
                                             </div>
 
                                             {/* Travel Date */}
                                             <div className="relative flex-1 min-w-[150px]">
                                                 <div 
                                                     className="cursor-pointer bg-white rounded-lg p-4 border border-gray-200 hover:border-orange transition-colors h-[70px] flex flex-col justify-center"
-                                                    onClick={() => toggleMultiCityDropdown(index, 'date')}
+                                                    onClick={() => toggleMultiCityDatePicker(index)}
                                                 >
                                                     <label className="text-xs font-medium text-gray-600 mb-1">Travel Date</label>
                                                     <div className="font-bold text-gray-900 text-base lg:text-lg">{segment.date ? formatDateDisplay(segment.date) : '--'}</div>
