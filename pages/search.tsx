@@ -979,19 +979,20 @@ const Search = () => {
 
     // Handle new search (when form is modified and re-submitted)
     const handleSearch = () => {
-        if (!selectedFromAirport.iata || !selectedToAirport.iata || !travelDate) {
-            return;
-        }
-
-        if (tripType === 'round' && !returnDate) {
-            return;
-        }
-
         if (tripType === 'multi') {
             const validSegments = multiCitySegments.filter(segment => 
                 segment.selectedFromAirport.iata && segment.selectedToAirport.iata && segment.date
             );
             if (validSegments.length < 2) {
+                return;
+            }
+        } else {
+            // Single/Return trip validation
+            if (!selectedFromAirport.iata || !selectedToAirport.iata || !travelDate) {
+                return;
+            }
+
+            if (tripType === 'round' && !returnDate) {
                 return;
             }
         }

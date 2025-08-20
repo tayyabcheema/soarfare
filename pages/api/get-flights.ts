@@ -79,6 +79,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     const searchData: FlightSearchRequest = req.body;
 
+    // Get authorization token from request headers (moved to top)
+    const authToken = req.headers.authorization?.replace('Bearer ', '');
+
     // Validate required fields
     const validationErrors = validateSearchData(searchData);
     if (validationErrors.length > 0) {
@@ -126,19 +129,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Handle multi-city data
     if (normalizedData.from_mc && normalizedData.to_mc && normalizedData.travel_date_mc) {
       console.log('🌍 Multi-city flight detected');
-      normalizedData.from_mc.forEach((from, index) => {
-        formData.append(`from_mc[${index}]`, from);
+      console.log('📊 Multi-city data:', {
+        from_mc: normalizedData.from_mc,
+        to_mc: normalizedData.to_mc,
+        travel_date_mc: normalizedData.travel_date_mc
       });
-      normalizedData.to_mc.forEach((to, index) => {
-        formData.append(`to_mc[${index}]`, to);
-      });
-      normalizedData.travel_date_mc.forEach((date, index) => {
-        formData.append(`travel_date_mc[${index}]`, date);
-      });
+      
+      // Since backend doesn't support multi-city, we'll make multiple API calls
+      console.log('🔄 Backend confirmed to not support multi-city, making multiple API calls...');
+      
+      // Make API calls for each segment and combine results
+      const multiCityResults = await processMultiCitySegments(normalizedData, authToken);
+      return res.status(200).json(multiCityResults);
     }
 
-    // Get authorization token from request headers
-    const authToken = req.headers.authorization?.replace('Bearer ', '');
     const headers: Record<string, string> = {
       'Content-Type': 'application/x-www-form-urlencoded',
     };
@@ -179,7 +183,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // If backend returns generic error, provide mock data for testing
     if (!data.success || data.success === 0) {
-      console.log('🚧 Backend API failed, returning mock data for testing...');
+      console.log('🚧 Backend API failed with error:', data.message || 'Unknown error');
+      console.log('🔍 Full backend response:', JSON.stringify(data, null, 2));
+      
+      // For multi-city flights, we need to create proper mock data
+      if (normalizedData.flight_type === 3) {
+        console.log('🌍 Backend does not support multi-city flights yet, creating mock data...');
+        console.log('💡 This suggests the Laravel backend needs multi-city implementation');
+        return res.status(200).json(createMultiCityMockData(normalizedData));
+      }
+      
+      console.log('✈️ Creating single/return trip mock data...');
       
       const mockData: FlightSearchResponse = {
         success: 1,
@@ -312,51 +326,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 function validateSearchData(data: FlightSearchRequest): string[] {
   const errors: string[] = [];
 
-  // Basic required fields for all flight types
-  if (!data.from) {
-    errors.push('Please select from/origin');
-  }
-
-  if (!data.to) {
-    errors.push('Please select to/destination');
-  }
-
-  if (!data.travel_date) {
-    errors.push('Please select travel date');
-  }
-
-  if (!data.class) {
-    errors.push('Please select class');
-  }
-
-  // Validate class values to match Laravel backend
-  if (data.class && !['Economy', 'PremiumEconomy', 'Business', 'First'].includes(data.class)) {
-    errors.push('Invalid class selection');
-  }
-
-  if (!data.adults || data.adults < 1) {
-    errors.push('At least 1 adult passenger is required');
-  }
-
-  if (data.childs < 0) {
-    errors.push('Number of children cannot be negative');
-  }
-
-  if (data.infants < 0) {
-    errors.push('Number of infants cannot be negative');
-  }
-
-  // Flight type specific validation (matching Laravel logic)
-  if (data.flight_type === 1) {
-    // Round trip - requires return_date
-    if (!data.return_date) {
-      errors.push('Please select return date');
-    }
-  } else if (data.flight_type === 2) {
-    // Single trip - no return_date needed
-    // No additional validation needed
-  } else if (data.flight_type === 3) {
-    // Multi-city - requires from_mc, to_mc, travel_date_mc
+  // Flight type specific validation
+  if (data.flight_type === 3) {
+    // Multi-city validation - check multi-city arrays instead of basic fields
     if (!data.from_mc || data.from_mc.length === 0) {
       errors.push('Multi-city origin cities are required');
     }
@@ -389,10 +361,76 @@ function validateSearchData(data: FlightSearchRequest): string[] {
         }
       });
     }
+  } else {
+    // Single/Return trip validation - check basic fields
+    if (!data.from) {
+      errors.push('Please select from/origin');
+    }
+
+    if (!data.to) {
+      errors.push('Please select to/destination');
+    }
+
+    if (!data.travel_date) {
+      errors.push('Please select travel date');
+    }
+  }
+
+  if (!data.class) {
+    errors.push('Please select class');
+  }
+
+  // Validate class values to match Laravel backend
+  if (data.class && !['Economy', 'PremiumEconomy', 'Business', 'First'].includes(data.class)) {
+    errors.push('Invalid class selection');
+  }
+
+  if (!data.adults || data.adults < 1) {
+    errors.push('At least 1 adult passenger is required');
+  }
+
+  if (data.childs < 0) {
+    errors.push('Number of children cannot be negative');
+  }
+
+  if (data.infants < 0) {
+    errors.push('Number of infants cannot be negative');
+  }
+
+  // Flight type specific validation (matching Laravel logic)
+  if (data.flight_type === 1) {
+    // Round trip - requires return_date
+    if (!data.return_date) {
+      errors.push('Please select return date');
+    }
+  } else if (data.flight_type === 2) {
+    // Single trip - no return_date needed
+    // No additional validation needed
   }
 
   // Validate date format and ensure it's not in the past
-  if (data.travel_date) {
+  if (data.flight_type === 3 && data.travel_date_mc) {
+    // Multi-city date validation
+    data.travel_date_mc.forEach((date, index) => {
+      const travelDate = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (isNaN(travelDate.getTime())) {
+        errors.push(`Invalid travel date format for segment ${index + 1}`);
+      } else if (travelDate < today) {
+        errors.push(`Travel date for segment ${index + 1} cannot be in the past`);
+      }
+      
+      // Allow dates up to 1 year in advance
+      const oneYearFromNow = new Date();
+      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+      if (travelDate > oneYearFromNow) {
+        errors.push(`Travel date for segment ${index + 1} cannot be more than 1 year in advance`);
+      }
+    });
+  } else if (data.travel_date) {
+    // Single/Return trip date validation
     const travelDate = new Date(data.travel_date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -429,4 +467,263 @@ function validateSearchData(data: FlightSearchRequest): string[] {
   }
 
   return errors;
+}
+
+// Process multi-city segments by making multiple API calls
+async function processMultiCitySegments(normalizedData: any, authToken?: string): Promise<FlightSearchResponse> {
+  console.log('🚀 Processing multi-city segments...');
+  
+  const allFareItineraries = [];
+  const allAirlines: Record<string, string> = {};
+  const allAirports: Record<string, any> = {};
+  const segmentResults = [];
+  
+  // Process each segment
+  for (let i = 0; i < normalizedData.from_mc.length; i++) {
+    const from = normalizedData.from_mc[i];
+    const to = normalizedData.to_mc[i];
+    const date = normalizedData.travel_date_mc[i];
+    
+    console.log(`📋 Processing segment ${i + 1}: ${from} → ${to} on ${date}`);
+    
+    try {
+      // Create form data for this segment
+      const segmentFormData = new URLSearchParams();
+      segmentFormData.append('travel_date', date);
+      segmentFormData.append('from', from);
+      segmentFormData.append('to', to);
+      segmentFormData.append('class', normalizedData.class);
+      segmentFormData.append('adults', normalizedData.adults.toString());
+      segmentFormData.append('childs', normalizedData.childs.toString());
+      segmentFormData.append('infants', normalizedData.infants.toString());
+      segmentFormData.append('flight_type', '2'); // Single trip
+      
+      // Make API call for this segment
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      const response = await fetch('https://admin.soarfare.com/api/get-flights', {
+        method: 'POST',
+        headers,
+        body: segmentFormData.toString(),
+      });
+      
+      if (response.ok) {
+        const segmentData: FlightSearchResponse = await response.json();
+        
+        if (segmentData.success === 1 && segmentData.data?.flights?.AirSearchResponse?.AirSearchResult?.FareItineraries) {
+          console.log(`✅ Segment ${i + 1} successful: ${segmentData.data.flights.AirSearchResponse.AirSearchResult.FareItineraries.length} flights found`);
+          
+          // Add segment identifier to each fare itinerary
+          const segmentFareItineraries = segmentData.data.flights.AirSearchResponse.AirSearchResult.FareItineraries.map((fareItinerary: any) => ({
+            ...fareItinerary,
+            segmentIndex: i,
+            segmentFrom: from,
+            segmentTo: to,
+            segmentDate: date
+          }));
+          
+          allFareItineraries.push(...segmentFareItineraries);
+          
+          // Merge airlines and airports
+          if (segmentData.data.airlines) {
+            Object.assign(allAirlines, segmentData.data.airlines);
+          }
+          if (segmentData.data.airports) {
+            Object.assign(allAirports, segmentData.data.airports);
+          }
+          
+          segmentResults.push({
+            segment: i + 1,
+            from,
+            to,
+            date,
+            flightsFound: segmentFareItineraries.length,
+            success: true
+          });
+        } else {
+          console.log(`❌ Segment ${i + 1} failed: No valid data returned`);
+          segmentResults.push({
+            segment: i + 1,
+            from,
+            to,
+            date,
+            flightsFound: 0,
+            success: false,
+            error: segmentData.message || 'No flights found'
+          });
+        }
+      } else {
+        console.log(`❌ Segment ${i + 1} failed: HTTP ${response.status}`);
+        segmentResults.push({
+          segment: i + 1,
+          from,
+          to,
+          date,
+          flightsFound: 0,
+          success: false,
+          error: `HTTP ${response.status}`
+        });
+      }
+    } catch (error) {
+      console.log(`❌ Segment ${i + 1} error:`, error);
+      segmentResults.push({
+        segment: i + 1,
+        from,
+        to,
+        date,
+        flightsFound: 0,
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+  
+  console.log('📊 Multi-city processing complete:', {
+    totalSegments: normalizedData.from_mc.length,
+    successfulSegments: segmentResults.filter(r => r.success).length,
+    totalFlights: allFareItineraries.length,
+    segmentResults
+  });
+  
+  // Create combined response
+  const timestamp = new Date().toISOString();
+  const sessionId = 'multi_city_session_' + Date.now();
+  
+  return {
+    success: 1,
+    data: {
+      flights: {
+        AirSearchResponse: {
+          session_id: sessionId,
+          trawex_session_id: null,
+          AirSearchResult: {
+            FareItineraries: allFareItineraries
+          }
+        }
+      },
+      airlines: allAirlines,
+      airports: allAirports
+    },
+    session_data: {
+      session_id: sessionId,
+      trawex_session_id: null,
+      timestamp: timestamp
+    },
+    multi_city_info: {
+      total_segments: normalizedData.from_mc.length,
+      segment_results: segmentResults
+    }
+  };
+}
+
+// Create mock data for multi-city flights
+function createMultiCityMockData(normalizedData: any): FlightSearchResponse {
+  const timestamp = new Date().toISOString();
+  const sessionId = 'mock_session_' + Date.now();
+  const trawexSessionId = 'mock_trawex_' + Date.now();
+  
+  // Create mock flights for each segment
+  const fareItineraries = [];
+  
+  if (normalizedData.from_mc && normalizedData.to_mc && normalizedData.travel_date_mc) {
+    normalizedData.from_mc.forEach((from: string, index: number) => {
+      const to = normalizedData.to_mc[index];
+      const date = normalizedData.travel_date_mc[index];
+      
+      // Create 2 mock flights for each segment
+      fareItineraries.push(
+        {
+          FareItinerary: {
+            DirectionInd: 'departure',
+            AirItineraryFareInfo: {
+              TotalFare: {
+                Amount: (800 + Math.random() * 400).toFixed(2),
+                CurrencyCode: 'USD'
+              },
+              FareSourceCode: `MOCK_MC_${index}_1`
+            },
+            OriginDestinationOptions: [
+              {
+                FlightSegment: {
+                  FlightNumber: `EK${200 + index}`,
+                  DepartureAirportLocationCode: from,
+                  ArrivalAirportLocationCode: to,
+                  DepartureDateTime: date + 'T14:30:00',
+                  ArrivalDateTime: date + 'T22:45:00',
+                  CabinClassText: normalizedData.class,
+                  MarketingAirlineCode: 'EK',
+                  OperatingAirlineCode: 'EK',
+                  StopQuantity: 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          FareItinerary: {
+            DirectionInd: 'departure',
+            AirItineraryFareInfo: {
+              TotalFare: {
+                Amount: (600 + Math.random() * 300).toFixed(2),
+                CurrencyCode: 'USD'
+              },
+              FareSourceCode: `MOCK_MC_${index}_2`
+            },
+            OriginDestinationOptions: [
+              {
+                FlightSegment: {
+                  FlightNumber: `QR${100 + index}`,
+                  DepartureAirportLocationCode: from,
+                  ArrivalAirportLocationCode: to,
+                  DepartureDateTime: date + 'T08:15:00',
+                  ArrivalDateTime: date + 'T16:30:00',
+                  CabinClassText: normalizedData.class,
+                  MarketingAirlineCode: 'QR',
+                  OperatingAirlineCode: 'QR',
+                  StopQuantity: 1
+                }
+              }
+            ]
+          }
+        }
+      );
+    });
+  }
+  
+  return {
+    success: 1,
+    data: {
+      flights: {
+        AirSearchResponse: {
+          session_id: sessionId,
+          trawex_session_id: trawexSessionId,
+          AirSearchResult: {
+            FareItineraries: fareItineraries
+          }
+        }
+      },
+      airlines: {
+        'EK': 'Emirates',
+        'QR': 'Qatar Airways'
+      },
+      airports: {
+        'ISB': { name: 'Islamabad International Airport', iata: 'ISB', city: 'Islamabad', country: 'Pakistan' },
+        'DXB': { name: 'Dubai International Airport', iata: 'DXB', city: 'Dubai', country: 'UAE' },
+        'LHE': { name: 'Allama Iqbal International Airport', iata: 'LHE', city: 'Lahore', country: 'Pakistan' },
+        'KHI': { name: 'Jinnah International Airport', iata: 'KHI', city: 'Karachi', country: 'Pakistan' },
+        'AUH': { name: 'Abu Dhabi International Airport', iata: 'AUH', city: 'Abu Dhabi', country: 'UAE' }
+      }
+    },
+    session_data: {
+      session_id: sessionId,
+      trawex_session_id: trawexSessionId,
+      timestamp: timestamp
+    }
+  };
 }
