@@ -695,12 +695,12 @@ const Search = () => {
 
         if (fromAirport) {
             setSelectedFromAirport(fromAirport);
-            setFrom(fromDisplay || fromAirport.city);
+            setFrom(fromDisplay || `${fromAirport.name} (${fromAirport.iata})`);
         }
 
         if (toAirport) {
             setSelectedToAirport(toAirport);
-            setTo(toDisplay || toAirport.city);
+            setTo(toDisplay || `${toAirport.name} (${toAirport.iata})`);
         }
 
         const queryTravelDate = query.travelDate as string || '';
@@ -734,8 +734,8 @@ const Search = () => {
                 const segmentToAirport = findAirportByCode(segmentToCode);
 
                 segments.push({
-                    from: segmentFromAirport?.city || segmentFromCode,
-                    to: segmentToAirport?.city || segmentToCode,
+                    from: segmentFromAirport ? `${segmentFromAirport.name} (${segmentFromAirport.iata})` : segmentFromCode,
+                    to: segmentToAirport ? `${segmentToAirport.name} (${segmentToAirport.iata})` : segmentToCode,
                     date: segmentDate,
                     fromQuery: '',
                     toQuery: '',
@@ -835,12 +835,12 @@ const Search = () => {
     // Handle airport selection
     const handleFromAirportSelect = (airport: any) => {
         setSelectedFromAirport(airport);
-        setFrom(airport.city);
+        setFrom(`${airport.name} (${airport.iata})`);
     };
 
     const handleToAirportSelect = (airport: any) => {
         setSelectedToAirport(airport);
-        setTo(airport.city);
+        setTo(`${airport.name} (${airport.iata})`);
     };
 
 
@@ -859,7 +859,7 @@ const Search = () => {
                 i === index ? { 
                     ...segment, 
                     selectedFromAirport: airport,
-                    from: airport.city
+                    from: `${airport.name} (${airport.iata})`
                 } : segment
             )
         );
@@ -871,7 +871,7 @@ const Search = () => {
                 i === index ? { 
                     ...segment, 
                     selectedToAirport: airport,
-                    to: airport.city
+                    to: `${airport.name} (${airport.iata})`
                 } : segment
             );
             
@@ -880,7 +880,7 @@ const Search = () => {
                 newSegments[index + 1] = {
                     ...newSegments[index + 1],
                     selectedFromAirport: airport,
-                    from: airport.city
+                    from: `${airport.name} (${airport.iata})`
                 };
             }
             

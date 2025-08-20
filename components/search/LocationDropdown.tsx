@@ -18,7 +18,7 @@ interface LocationDropdownProps {
 }
 
 const LocationDropdown: React.FC<LocationDropdownProps> = ({ label, value, onChange, placeholder = '', ariaLabel, error }) => {
-  const [query, setQuery] = useState(value ? `${value.city} (${value.iata})` : '');
+  const [query, setQuery] = useState(value ? `${value.name} (${value.iata})` : '');
   const [open, setOpen] = useState(false);
   const [selectedAirport, setSelectedAirport] = useState<Airport | null>(value);
   const ref = useRef<HTMLDivElement>(null);
@@ -36,7 +36,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ label, value, onCha
   // Update query when value prop changes
   useEffect(() => {
     if (value) {
-      setQuery(`${value.city} (${value.iata})`);
+      setQuery(`${value.name} (${value.iata})`);
       setSelectedAirport(value);
     } else {
       setQuery('');
@@ -74,7 +74,7 @@ const LocationDropdown: React.FC<LocationDropdownProps> = ({ label, value, onCha
 
   const handleAirportSelect = (airport: Airport) => {
     setSelectedAirport(airport);
-    setQuery(`${airport.city} (${airport.iata})`);
+    setQuery(`${airport.name} (${airport.iata})`);
     setOpen(false);
     onChange(airport);
   };
