@@ -89,6 +89,7 @@ export interface FareItinerary {
 
 export interface FlightSearchResponse {
   success: number;
+  message?: string;
   data: {
     flights: {
       AirSearchResponse: {
@@ -111,8 +112,20 @@ export interface FlightSearchResponse {
   };
   session_data?: {
     session_id: string;
-    trawex_session_id: string | null;
+    trawex_session_id: string | undefined;
     timestamp: string;
+  };
+  multi_city_info?: {
+    total_segments: number;
+    segment_results: Array<{
+      segment: number;
+      from: string;
+      to: string;
+      date: string;
+      flightsFound: number;
+      success: boolean;
+      error?: string;
+    }>;
   };
 }
 
@@ -411,6 +424,12 @@ class ApiClient {
   // Subscription endpoints
   async getSubscriptions(): Promise<ApiResponse> {
     return this.request('/subscription-list', {
+      method: 'GET'
+    });
+  }
+
+  async getSubscriptionPlans(): Promise<ApiResponse> {
+    return this.request('/subscription-plans', {
       method: 'GET'
     });
   }
