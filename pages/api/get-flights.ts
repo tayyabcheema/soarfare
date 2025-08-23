@@ -17,6 +17,7 @@ export interface FlightSearchRequest {
 
 export interface FlightSearchResponse {
   success: number;
+  message?: string;
   data: {
     flights: {
       AirSearchResponse: {
@@ -63,6 +64,18 @@ export interface FlightSearchResponse {
     session_id: string;
     trawex_session_id?: string;
     timestamp: string;
+  };
+  multi_city_info?: {
+    total_segments: number;
+    segment_results: Array<{
+      segment: number;
+      from: string;
+      to: string;
+      date: string;
+      flightsFound: number;
+      success: boolean;
+      error?: string;
+    }>;
   };
 }
 
@@ -183,7 +196,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // If backend returns generic error, provide mock data for testing
     if (!data.success || data.success === 0) {
-      console.log('🚧 Backend API failed with error:', data.message || 'Unknown error');
+      console.log('🚧 Backend API failed with error:', (data as any).message || 'Unknown error');
       console.log('🔍 Full backend response:', JSON.stringify(data, null, 2));
       
       // For multi-city flights, we need to create proper mock data
@@ -300,7 +313,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (data.success && data.data?.flights?.AirSearchResponse) {
       const sessionData = {
         session_id: data.data.flights.AirSearchResponse.session_id,
-        trawex_session_id: data.data.flights.AirSearchResponse.trawex_session_id || null,
+        trawex_session_id: data.data.flights.AirSearchResponse.trawex_session_id || undefined,
         timestamp: new Date().toISOString(),
       };
 
@@ -473,10 +486,46 @@ function validateSearchData(data: FlightSearchRequest): string[] {
 async function processMultiCitySegments(normalizedData: any, authToken?: string): Promise<FlightSearchResponse> {
   console.log('🚀 Processing multi-city segments...');
   
-  const allFareItineraries = [];
+  const allFareItineraries: Array<{
+    FareItinerary: {
+      DirectionInd: string;
+      AirItineraryFareInfo: {
+        TotalFare: {
+          Amount: string;
+          CurrencyCode: string;
+        };
+        FareSourceCode: string;
+      };
+      OriginDestinationOptions: Array<{
+        FlightSegment: {
+          FlightNumber: string;
+          DepartureAirportLocationCode: string;
+          ArrivalAirportLocationCode: string;
+          DepartureDateTime: string;
+          ArrivalDateTime: string;
+          CabinClassText: string;
+          MarketingAirlineCode: string;
+          OperatingAirlineCode?: string;
+          StopQuantity?: number;
+        };
+      }>;
+    };
+    segmentIndex?: number;
+    segmentFrom?: string;
+    segmentTo?: string;
+    segmentDate?: string;
+  }> = [];
   const allAirlines: Record<string, string> = {};
   const allAirports: Record<string, any> = {};
-  const segmentResults = [];
+  const segmentResults: Array<{
+    segment: number;
+    from: string;
+    to: string;
+    date: string;
+    flightsFound: number;
+    success: boolean;
+    error?: string;
+  }> = [];
   
   // Process each segment
   for (let i = 0; i < normalizedData.from_mc.length; i++) {
@@ -555,7 +604,7 @@ async function processMultiCitySegments(normalizedData: any, authToken?: string)
             date,
             flightsFound: 0,
             success: false,
-            error: segmentData.message || 'No flights found'
+            error: (segmentData as any).message || 'No flights found'
           });
         }
       } else {
@@ -601,7 +650,7 @@ async function processMultiCitySegments(normalizedData: any, authToken?: string)
       flights: {
         AirSearchResponse: {
           session_id: sessionId,
-          trawex_session_id: null,
+          trawex_session_id: undefined,
           AirSearchResult: {
             FareItineraries: allFareItineraries
           }
@@ -612,7 +661,7 @@ async function processMultiCitySegments(normalizedData: any, authToken?: string)
     },
     session_data: {
       session_id: sessionId,
-      trawex_session_id: null,
+      trawex_session_id: undefined,
       timestamp: timestamp
     },
     multi_city_info: {
@@ -629,7 +678,31 @@ function createMultiCityMockData(normalizedData: any): FlightSearchResponse {
   const trawexSessionId = 'mock_trawex_' + Date.now();
   
   // Create mock flights for each segment
-  const fareItineraries = [];
+  const fareItineraries: Array<{
+    FareItinerary: {
+      DirectionInd: string;
+      AirItineraryFareInfo: {
+        TotalFare: {
+          Amount: string;
+          CurrencyCode: string;
+        };
+        FareSourceCode: string;
+      };
+      OriginDestinationOptions: Array<{
+        FlightSegment: {
+          FlightNumber: string;
+          DepartureAirportLocationCode: string;
+          ArrivalAirportLocationCode: string;
+          DepartureDateTime: string;
+          ArrivalDateTime: string;
+          CabinClassText: string;
+          MarketingAirlineCode: string;
+          OperatingAirlineCode?: string;
+          StopQuantity?: number;
+        };
+      }>;
+    };
+  }> = [];
   
   if (normalizedData.from_mc && normalizedData.to_mc && normalizedData.travel_date_mc) {
     normalizedData.from_mc.forEach((from: string, index: number) => {

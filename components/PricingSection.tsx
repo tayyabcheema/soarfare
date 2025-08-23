@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
+import { apiClient } from '../lib/api';
+import { SubscriptionTier } from '../types/subscription';
 
 interface PricingPlan {
   id: string;
@@ -19,54 +21,67 @@ interface PricingSectionProps {
 
 const PricingSection: React.FC<PricingSectionProps> = ({ showHeading = true }) => {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionTier[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const headingRef = useRef(null);
   const cardsRef = useRef(null);
   const isHeadingInView = useInView(headingRef, { once: true, margin: "-100px" });
   const isCardsInView = useInView(cardsRef, { once: true, margin: "-100px" });
 
-  const pricingPlans: PricingPlan[] = [
-    {
-      id: 'basic',
-      title: 'Basic Plan',
-      subtitle: 'Perfect for casual travelers or those getting started',
-      price: '$20',
-      icon: '/price1.svg',
-      features: [
-        'Build flight credit every month',
-        'Earn Elevation Rewards points',
-        'Access to all SoarFare features',
-        'Pause or cancel anytime',
-        'Great for planning ahead on a budget'
-      ]
-    },
-    {
-      id: 'standard',
-      title: 'Standard',
-      subtitle: 'Our most popular plan—ideal for regular travelers',
-      price: '$50',
-      icon: '/price2.svg',
-      isPopular: true,
-      features: [
-        'Everything in the Starter Plan',
-        'Earn more flight credit, faster',
-        'Accelerated Elevation Rewards accumulation',
-        'Great for weekend getaways or annual trips'
-      ]
-    },
-    {
-      id: 'premium',
-      title: 'Premium',
-      subtitle: 'For frequent flyers and big dreamers',
-      price: '$100',
-      icon: '/price3.svg',
-      features: [
-        'Everything in the Standard Plan',
-        'Maximize your monthly flight savings',
-        'Reach your travel goals even quicker',
-        'Ideal for international trips or multiple flights per year'
-      ]
-    }
-  ];
+  // Fetch subscription plans from backend
+  useEffect(() => {
+    const fetchSubscriptionPlans = async () => {
+      try {
+        const response = await apiClient.getSubscriptionPlans();
+        if (response.success && response.data?.packages) {
+          setSubscriptionPlans(response.data.packages);
+        } else {
+          setError('Failed to fetch subscription plans');
+        }
+      } catch (err) {
+        console.error('Error fetching subscription plans:', err);
+        setError('Failed to load subscription plans');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubscriptionPlans();
+  }, []);
+
+  // Transform backend data to frontend format
+  const transformPlanData = (tier: SubscriptionTier): PricingPlan => {
+    const features = [
+      `${tier.points} Elevation Rewards points per month`,
+      `${tier.regional} Regional flights included`,
+      tier.continental > 0 ? `${tier.continental} Continental flights included` : null,
+      tier.international > 0 ? `${tier.international} International flights included` : null,
+      'Access to all SoarFare features',
+      'Pause or cancel anytime'
+    ].filter(Boolean) as string[];
+
+    return {
+      id: tier.id.toString(),
+      title: tier.title,
+      subtitle: `Perfect for ${tier.title.toLowerCase()}s`,
+      price: `$${tier.price}`,
+      icon: getIconForTier(tier.id),
+      features,
+      isPopular: tier.id === 2 // Standard plan is popular
+    };
+  };
+
+  const getIconForTier = (tierId: number): string => {
+    const iconMap: { [key: number]: string } = {
+      1: '/price1.svg', // Basic
+      2: '/price2.svg', // Standard
+      4: '/price3.svg', // Premium
+    };
+    return iconMap[tierId] || '/price1.svg';
+  };
+
+  const pricingPlans: PricingPlan[] = subscriptionPlans.map(transformPlanData);
 
   const getCardStyle = (planId: string, isPopular: boolean) => {
     if (hoveredCard === null) {
@@ -171,7 +186,42 @@ const PricingSection: React.FC<PricingSectionProps> = ({ showHeading = true }) =
           animate={isCardsInView ? "visible" : "hidden"}
           className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 xl:gap-8 "
         >
-          {pricingPlans.map((plan, index) => (
+          {loading ? (
+            // Loading skeleton
+            Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="bg-white rounded-2xl p-6 lg:p-8 border border-gray-200 animate-pulse">
+                <div className="h-8 bg-gray-200 rounded mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded mb-6"></div>
+                <div className="h-12 bg-gray-200 rounded mb-8"></div>
+                <div className="h-10 bg-gray-200 rounded mb-8"></div>
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <div className="w-6 h-6 bg-gray-200 rounded"></div>
+                      <div className="h-4 bg-gray-200 rounded flex-1"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : error ? (
+            // Error state
+            <div className="col-span-full text-center py-12">
+              <div className="text-red-600 text-lg font-semibold mb-4">{error}</div>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="bg-orange text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange/90 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : pricingPlans.length === 0 ? (
+            // No plans available
+            <div className="col-span-full text-center py-12">
+              <div className="text-gray-600 text-lg font-semibold mb-4">No subscription plans available</div>
+            </div>
+          ) : (
+            pricingPlans.map((plan, index) => (
             <motion.div
               key={plan.id}
               variants={cardVariants}
@@ -271,7 +321,8 @@ const PricingSection: React.FC<PricingSectionProps> = ({ showHeading = true }) =
                 ))}
               </div>
             </motion.div>
-          ))}
+          ))
+          )}
         </motion.div>
       </div>
     </section>

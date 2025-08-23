@@ -94,5 +94,11 @@ export interface IPointsPurchaseResponse {
 }
 
 // This is what we're actually using in our mock implementation
-export type BookingResponse = IBookingResponse;
-export type PointsPurchaseResponse = IPointsPurchaseResponse;
+export type BookingResponse = {
+  success: boolean;
+  data: IBookingResponseData;
+};
+export type PointsPurchaseResponse = {
+  success: boolean;
+  data: IPointsPurchaseResponseData;
+};
