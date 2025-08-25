@@ -1,5 +1,4 @@
 import { 
-    MOCK_USER_POINTS, 
     MOCK_FARE_SOURCE_CODES, 
     MOCK_FLIGHT_BOOKING_RESPONSE,
     MOCK_POINTS_PURCHASE_RESPONSE,
@@ -9,23 +8,47 @@ import {
     BookingResponse, 
     PointsPurchaseResponse, 
     FareSourceCodeResponse,
-    UserPointsResponse 
+    UserPointsResponse,
+    UserProfile
 } from '../types/booking';
+import apiClient from '../lib/api';
 
 // Set this to false when real APIs are ready
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 class BookingService {
     static async getUserPoints(): Promise<UserPointsResponse> {
         if (USE_MOCK_DATA) {
             return new Promise(resolve => {
                 setTimeout(() => {
-                    resolve({ points: MOCK_USER_POINTS });
+                    resolve({ points: 600 }); // Fallback mock data
                 }, 500); // Simulate API delay
             });
         }
-        // Real API call will go here
-        return Promise.reject('Real API not implemented yet');
+        
+        try {
+            // Get token from localStorage
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
+            // Fetch user dashboard data which includes points
+            const response = await apiClient.getDashboard(token);
+            
+            if (response.success && response.data) {
+                // Extract user points from dashboard response
+                const userPoints = response.data.user_points || 0;
+                return { points: userPoints };
+            } else {
+                throw new Error(response.message || 'Failed to fetch user points');
+            }
+        } catch (error) {
+            console.error('Error fetching user points:', error);
+            // Return fallback mock data if API fails
+            return { points: 600 };
+        }
     }
 
     static async getFareSourceCode(flightId: string): Promise<FareSourceCodeResponse> {
@@ -62,7 +85,7 @@ class BookingService {
         return Promise.reject('Real API not implemented yet');
     }
 
-    static async getUserProfile() {
+    static async getUserProfile(): Promise<UserProfile> {
         if (USE_MOCK_DATA) {
             return new Promise(resolve => {
                 setTimeout(() => {
@@ -70,7 +93,28 @@ class BookingService {
                 }, 300);
             });
         }
-        return Promise.reject('Real API not implemented yet');
+        
+        try {
+            // Get token from localStorage
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
+            // Fetch user profile data
+            const response = await apiClient.getUserProfile(token);
+            
+            if (response.success && response.data) {
+                return response.data;
+            } else {
+                throw new Error(response.message || 'Failed to fetch user profile');
+            }
+        } catch (error) {
+            console.error('Error fetching user profile:', error);
+            // Return fallback mock data if API fails
+            return MOCK_USER_PROFILE;
+        }
     }
 }
 

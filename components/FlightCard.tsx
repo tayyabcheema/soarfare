@@ -343,7 +343,7 @@ const FlightCard: React.FC<FlightCardProps> = ({
           currentPoints={currentUserPoints}
           requiredPoints={flight.points}
           pointsNeeded={flight.points - currentUserPoints}
-          purchaseAmount={195} // This should be calculated based on your points-to-dollars conversion
+          purchaseAmount={Math.ceil((flight.points - currentUserPoints) * 3.75)} // Calculate cost: ~$3.75 per point
         />
       </div>
 

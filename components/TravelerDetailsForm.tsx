@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import BookingService from '../utils/bookingService';
+import { UserProfile } from '../types/booking';
 
 interface TravelerDetailsFormProps {
   onBack: () => void;
@@ -65,6 +67,30 @@ const TravelerDetailsForm: React.FC<TravelerDetailsFormProps> = ({ onBack, onSub
       }
     };
   });
+
+  // Pre-fill user data if available
+  useEffect(() => {
+    const prefillUserData = async () => {
+      try {
+        const userProfile: UserProfile = await BookingService.getUserProfile();
+        if (userProfile && userProfile.email) {
+          setFormData(prev => ({
+            ...prev,
+            contactDetails: {
+              ...prev.contactDetails,
+              email: userProfile.email || '',
+              phoneCode: userProfile.phone_code || '',
+              phoneNumber: userProfile.phone || '',
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('Error pre-filling user data:', error);
+      }
+    };
+
+    prefillUserData();
+  }, []);
 
   const handleContactDetailsChange = (field: string, value: string) => {
     setFormData(prev => ({

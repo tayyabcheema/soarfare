@@ -102,3 +102,18 @@ export type PointsPurchaseResponse = {
   success: boolean;
   data: IPointsPurchaseResponseData;
 };
+
+// User Profile interface that extends User with additional fields
+export interface UserProfile {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role_id: number;
+  tier_id: number | null;
+  profile_photo: string | null;
+  created_at: string;
+  updated_at: string;
+  phone_code?: string;
+  phone?: string;
+}

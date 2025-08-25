@@ -1,5 +1,4 @@
 import React from 'react';
-import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -119,8 +118,38 @@ const BlogDetail: React.FC<BlogDetailProps> = ({ blog }) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { slug } = context.params!;
+export const getStaticPaths = async () => {
+  try {
+    // Fetch all blog slugs for static generation
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/blog`);
+    const data = await response.json();
+
+    if (data.success && data.data.blogs) {
+      const paths = data.data.blogs.map((blog: any) => ({
+        params: { slug: blog.slug }
+      }));
+
+      return {
+        paths,
+        fallback: 'blocking' // This will generate new pages on-demand
+      };
+    }
+
+    return {
+      paths: [],
+      fallback: 'blocking'
+    };
+  } catch (error) {
+    console.error('Error fetching blog paths:', error);
+    return {
+      paths: [],
+      fallback: 'blocking'
+    };
+  }
+};
+
+export const getStaticProps = async (context: any) => {
+  const { slug } = context.params;
 
   try {
     // Fetch blog data from API
@@ -133,21 +162,24 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       return {
         props: {
           blog: blog || null
-        }
+        },
+        revalidate: 60 // Revalidate every 60 seconds
       };
     }
 
     return {
       props: {
         blog: null
-      }
+      },
+      revalidate: 60
     };
   } catch (error) {
     console.error('Error fetching blog:', error);
     return {
       props: {
         blog: null
-      }
+      },
+      revalidate: 60
     };
   }
 };

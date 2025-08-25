@@ -43,6 +43,17 @@ export const MOCK_POINTS_PURCHASE_RESPONSE = {
 };
 
 export const MOCK_USER_PROFILE = {
+    id: 1,
+    first_name: 'John',
+    last_name: 'Doe',
+    email: 'john.doe@example.com',
+    role_id: 2,
+    tier_id: 1,
+    profile_photo: null,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    phone_code: '+1',
+    phone: '5551234567',
     points: MOCK_USER_POINTS,
     paymentMethods: [
         {

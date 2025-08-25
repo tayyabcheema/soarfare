@@ -4,27 +4,82 @@ import TravelerDetailsForm from '../components/TravelerDetailsForm';
 import type { TravelerFormData } from '../components/TravelerDetailsForm';
 import BookingService from '../utils/bookingService';
 import { CenteredLoader } from '../components/ui/LoadingSpinner';
+import PointsPurchaseModal from '../components/PointsPurchaseModal';
 
 const BookFlight = () => {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [flightDetails, setFlightDetails] = useState<any>(null);
+  const [currentUserPoints, setCurrentUserPoints] = useState(0);
+  const [showPointsModal, setShowPointsModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Get flight details from query params or session storage
     const details = sessionStorage.getItem('selectedFlight');
     if (details) {
-      setFlightDetails(JSON.parse(details));
+      const flightData = JSON.parse(details);
+      setFlightDetails(flightData);
+      
+      // Check if user has enough points
+      checkUserPoints(flightData);
     } else {
       router.push('/search');
     }
   }, [router]);
+
+  const checkUserPoints = async (flightData: any) => {
+    try {
+      const response = await BookingService.getUserPoints();
+      setCurrentUserPoints(response.points);
+      
+      if (response.points < flightData.points) {
+        setShowPointsModal(true);
+      }
+    } catch (error) {
+      console.error('Error checking user points:', error);
+    }
+  };
 
   const handleBack = () => {
     if (step === 1) {
       router.back();
     } else {
       setStep(step - 1);
+    }
+  };
+
+  const handleUseCard = async () => {
+    setIsLoading(true);
+    try {
+      const pointsNeeded = flightDetails.points - currentUserPoints;
+      const purchaseResponse = await BookingService.purchasePoints(pointsNeeded);
+      
+      if (purchaseResponse.success) {
+        setCurrentUserPoints(purchaseResponse.data.points.newTotal);
+        setShowPointsModal(false);
+      }
+    } catch (error) {
+      console.error('Error processing card payment:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputNewCard = async () => {
+    setIsLoading(true);
+    try {
+      const pointsNeeded = flightDetails.points - currentUserPoints;
+      const purchaseResponse = await BookingService.purchasePoints(pointsNeeded);
+      
+      if (purchaseResponse.success) {
+        setCurrentUserPoints(purchaseResponse.data.points.newTotal);
+        setShowPointsModal(false);
+      }
+    } catch (error) {
+      console.error('Error processing new card payment:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -71,6 +126,20 @@ const BookFlight = () => {
           onBack={handleBack}
           onSubmit={handleTravelerDetailsSubmit}
         />
+
+        {/* Points Purchase Modal */}
+        {flightDetails && (
+          <PointsPurchaseModal
+            isOpen={showPointsModal}
+            onClose={() => setShowPointsModal(false)}
+            onUseCard={handleUseCard}
+            onInputNewCard={handleInputNewCard}
+            currentPoints={currentUserPoints}
+            requiredPoints={flightDetails.points}
+            pointsNeeded={flightDetails.points - currentUserPoints}
+            purchaseAmount={Math.ceil((flightDetails.points - currentUserPoints) * 3.75)}
+          />
+        )}
       </div>
     </div>
   );
