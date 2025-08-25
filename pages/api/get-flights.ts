@@ -318,9 +318,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
 
       console.log('💾 Session data created:', sessionData);
+      console.log('🔍 Session ID from response:', data.data.flights.AirSearchResponse.session_id);
+      console.log('🔍 Full AirSearchResponse:', JSON.stringify(data.data.flights.AirSearchResponse, null, 2));
+      
       // You could store this in a database or cache here
       // For now, we'll just include it in the response
       (data as any).session_data = sessionData;
+    } else {
+      console.log('⚠️ No session data available in response');
+      console.log('🔍 Response structure:', JSON.stringify(data, null, 2));
     }
 
     console.log('🎉 Sending successful response to frontend');

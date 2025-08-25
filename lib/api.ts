@@ -460,6 +460,15 @@ class ApiClient {
       token
     });
   }
+
+  // Fare rules endpoint
+  async getFareRules(fareRulesData: { session_id: string; fare_source_code: string }, token?: string): Promise<ApiResponse> {
+    return this.request('/fare-rules', {
+      method: 'POST',
+      data: fareRulesData,
+      token
+    });
+  }
 }
 
 // Create and export the API client instance

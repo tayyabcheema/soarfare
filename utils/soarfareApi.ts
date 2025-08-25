@@ -142,6 +142,14 @@ export class SoarFareApi {
             token
         });
     }
+
+    static async getFareRules(fareRulesData: { session_id: string; fare_source_code: string }, token?: string) {
+        return this.call('fare-rules', {
+            method: 'POST',
+            data: fareRulesData,
+            token
+        });
+    }
 }
 
 export default SoarFareApi;
